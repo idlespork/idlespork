@@ -17,6 +17,11 @@ import tkFileDialog
 import tkMessageBox
 from SimpleDialog import SimpleDialog
 
+from Tkinter import Toplevel, Label, Entry, Frame, Button, Text
+from Tkinter import TOP, W, X, LEFT, BOTH
+
+from idlesporklib.configHandler import idleConf
+
 # Try setting the locale, so that we can find out
 # what encoding to use
 try:
@@ -566,9 +571,6 @@ class IOBinding:
 
 
 def _io_binding(parent):  # htest #
-    from Tkinter import Toplevel, Text
-    from idlelib.configHandler import idleConf
-
     root = Toplevel(parent)
     root.title("Test IOBinding")
     width, height, x, y = list(map(int, re.split('[x+]', parent.geometry())))
@@ -595,5 +597,5 @@ def _io_binding(parent):  # htest #
     IOBinding(editwin)
 
 if __name__ == "__main__":
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_io_binding)

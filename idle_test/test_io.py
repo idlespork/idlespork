@@ -1,6 +1,6 @@
 import unittest
 import io
-from idlelib.PyShell import PseudoInputFile, PseudoOutputFile
+from idlesporklib.PyShell import PseudoInputFile, PseudoOutputFile
 from test import test_support as support
 
 

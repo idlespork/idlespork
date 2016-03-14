@@ -1,8 +1,7 @@
-from Tkinter import *
-from idlelib.EditorWindow import EditorWindow
+from idlesporklib.EditorWindow import EditorWindow
 import re
 import tkMessageBox
-from idlelib import IOBinding
+from idlesporklib import IOBinding
 
 class OutputWindow(EditorWindow):
 

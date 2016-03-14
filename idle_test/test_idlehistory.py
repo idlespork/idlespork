@@ -3,9 +3,9 @@ from test.test_support import requires
 
 import Tkinter as tk
 from Tkinter import Text as tkText
-from idlelib.idle_test.mock_tk import Text as mkText
-from idlelib.IdleHistory import History
-from idlelib.configHandler import idleConf
+from idle_test.mock_tk import Text as mkText
+from idlesporklib.IdleHistory import History
+from idlesporklib.configHandler import idleConf
 
 line1 = 'a = 7'
 line2 = 'b = a'

@@ -1,5 +1,5 @@
 try:
-    import idlelib.PyShell
+    import idlesporklib.PyShell
 except ImportError:
     # IDLE is not installed, but maybe PyShell is on sys.path:
     import PyShell
@@ -14,4 +14,4 @@ except ImportError:
             os.environ['PYTHONPATH'] = idledir
     PyShell.main()
 else:
-    idlelib.PyShell.main()
+    idlesporklib.PyShell.main()

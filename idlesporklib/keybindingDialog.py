@@ -1,7 +1,10 @@
 """
 Dialog for building Tkinter accelerator key bindings
 """
-from Tkinter import *
+from Tkinter import Toplevel, Frame, StringVar, Button, Label, \
+                    Checkbutton, Listbox, Scrollbar, Entry
+from Tkinter import TRUE, FALSE, SUNKEN, BOTH, TOP, BOTTOM, NSEW, EW, W, \
+                    LEFT, GROOVE, X, SINGLE, NS, END, MOVETO, VERTICAL, ANCHOR
 import tkMessageBox
 import string
 import sys
@@ -262,5 +265,5 @@ class GetKeysDialog(Toplevel):
         return keysOK
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(GetKeysDialog)

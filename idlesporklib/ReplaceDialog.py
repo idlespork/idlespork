@@ -1,7 +1,8 @@
-from Tkinter import *
+from Tkinter import StringVar, TclError, Text, Tk, Button
+from Tkinter import SEL, END
 
-from idlelib import SearchEngine
-from idlelib.SearchDialogBase import SearchDialogBase
+from idlesporklib import SearchEngine
+from idlesporklib.SearchDialogBase import SearchDialogBase
 import re
 
 
@@ -101,7 +102,7 @@ class ReplaceDialog(SearchDialogBase):
             if not res:
                 break
             line, m = res
-            chars = text.get("%d.0" % line, "%d.0" % (line+1))
+            #chars = text.get("%d.0" % line, "%d.0" % (line+1)) ## Seems unused
             orig = m.group()
             new = self._replace_expand(m, repl)
             if new is None:
@@ -216,5 +217,5 @@ def _replace_dialog(parent):
     button.pack()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_replace_dialog)

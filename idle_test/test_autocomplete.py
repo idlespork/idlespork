@@ -2,11 +2,11 @@ import unittest
 from test.test_support import requires
 from Tkinter import Tk, Text
 
-import idlelib.AutoComplete as ac
-import idlelib.AutoCompleteWindow as acw
-import idlelib.macosxSupport as mac
-from idlelib.idle_test.mock_idle import Func
-from idlelib.idle_test.mock_tk import Event
+import idlesporklib.AutoComplete as ac
+import idlesporklib.AutoCompleteWindow as acw
+import idlesporklib.macosxSupport as mac
+from idle_test.mock_idle import Func
+from idle_test.mock_tk import Event
 
 class AutoCompleteWindow:
     def complete():

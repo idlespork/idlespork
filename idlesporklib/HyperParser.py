@@ -7,7 +7,8 @@ the structure of code.
 
 import string
 import keyword
-from idlelib import PyParse
+from idlesporklib import PyParse
+from idlesporklib import Commands
 
 class HyperParser:
 
@@ -94,6 +95,12 @@ class HyperParser:
         return (self.isopener[self.indexbracket] and
                 self.rawtext[self.bracketing[self.indexbracket][0]]
                 in ('"', "'"))
+
+    def is_in_command(self):
+        for c in Commands.command_names:
+            if self.rawtext.strip().startswith(c):
+                return True
+        return False
 
     def is_in_code(self):
         """Is the index given to the HyperParser in normal code?"""
@@ -252,4 +259,4 @@ class HyperParser:
 
 if __name__ == '__main__':
     import unittest
-    unittest.main('idlelib.idle_test.test_hyperparser', verbosity=2)
+    unittest.main('idlesporklib.idle_test.test_hyperparser', verbosity=2)

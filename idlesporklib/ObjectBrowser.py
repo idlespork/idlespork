@@ -11,7 +11,7 @@
 
 import re
 
-from idlelib.TreeWidget import TreeItem, TreeNode, ScrolledCanvas
+from idlesporklib.TreeWidget import TreeItem, TreeNode, ScrolledCanvas
 
 from repr import Repr
 
@@ -112,7 +112,7 @@ class DictTreeItem(SequenceTreeItem):
             pass
         return keys
 
-from types import *
+from types import IntType, LongType, FloatType, StringType, TupleType, ListType, DictType, InstanceType, ClassType
 
 dispatch = {
     IntType: AtomicObjectTreeItem,
@@ -152,5 +152,5 @@ def _object_browser(parent):
     root.mainloop()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_object_browser)

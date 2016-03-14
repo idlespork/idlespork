@@ -17,16 +17,17 @@ XXX GvR Redesign this interface (yet again) as follows:
 
 """
 
-import os
+#import os
 import re
 import string
 import tabnanny
 import tokenize
 import tkMessageBox
-from idlelib import PyShell
+import Tkinter
+#from idlesporklib import PyShell
 
-from idlelib.configHandler import idleConf
-from idlelib import macosxSupport
+from idlesporklib.configHandler import idleConf
+from idlesporklib import macosxSupport
 
 IDENTCHARS = string.ascii_letters + string.digits + "_"
 
@@ -45,7 +46,8 @@ class ScriptBinding:
     menudefs = [
         ('run', [None,
                  ('Check Module', '<<check-module>>'),
-                 ('Run Module', '<<run-module>>'), ]), ]
+                 ('Run Module', '<<run-module>>'),
+                 ('Execute Line', '<<exec-line>>'),]), ]
 
     def __init__(self, editwin):
         self.editwin = editwin
@@ -65,6 +67,21 @@ class ScriptBinding:
             return 'break'
         if not self.tabnanny(filename):
             return 'break'
+
+    def exec_line_event(self, event):
+        line = self.editwin.text.get(Tkinter.SEL_FIRST, Tkinter.SEL_LAST)
+        if line == '':
+            line = self.editwin.text.get('insert linestart', 'insert lineend')
+        line = line.lstrip() + '\n'
+        shell = self.flist.open_shell()
+        shell.text.delete('iomark', 'end-1c')
+        shell.text.insert('iomark', line)
+        shell.color.recolorize()
+        shell.runit()
+        shell.text.mark_set('insert', 'end-1c')
+
+    def find_block(self):
+        pass
 
     def tabnanny(self, filename):
         f = open(filename, 'r')
@@ -146,9 +163,9 @@ class ScriptBinding:
         if not self.tabnanny(filename):
             return 'break'
         interp = self.shell.interp
-        if PyShell.use_subprocess:
-            interp.restart_subprocess(with_cwd=False, filename=code.co_filename)
-        dirname = os.path.dirname(filename)
+        # TODO add option to restart shell
+        #if PyShell.use_subprocess:
+        #    interp.restart_subprocess(with_cwd=False, filename=code.co_filename)
         # XXX Too often this discards arguments the user just set...
         interp.runcommand("""if 1:
             __file__ = {filename!r}
@@ -157,10 +174,8 @@ class ScriptBinding:
             if (not _sys.argv or
                 _basename(_sys.argv[0]) != _basename(__file__)):
                 _sys.argv = [__file__]
-            import os as _os
-            _os.chdir({dirname!r})
-            del _sys, _basename, _os
-            \n""".format(filename=filename, dirname=dirname))
+            del _sys, _basename
+            \n""".format(filename=filename))
         interp.prepend_syspath(filename)
         # XXX KBK 03Jul04 When run w/o subprocess, runtime warnings still
         #         go to __stderr__.  With subprocess, they go to the shell.

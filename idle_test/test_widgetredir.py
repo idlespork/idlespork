@@ -1,12 +1,12 @@
-"""Unittest for idlelib.WidgetRedirector
+"""Unittest for idlesporklib.WidgetRedirector
 
 100% coverage
 """
 from test.test_support import requires
 import unittest
-from idlelib.idle_test.mock_idle import Func
+from idle_test.mock_idle import Func
 from Tkinter import Tk, Text, TclError
-from idlelib.WidgetRedirector import WidgetRedirector
+from idlesporklib.WidgetRedirector import WidgetRedirector
 
 
 class InitCloseTest(unittest.TestCase):

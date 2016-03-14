@@ -4,7 +4,8 @@ Used to get new highlight theme and keybinding set names.
 The 'return value' for the dialog, used two placed in configDialog.py,
 is the .result attribute set in the Ok and Cancel methods.
 """
-from Tkinter import *
+from Tkinter import Toplevel, StringVar, Frame, Message, Button, Entry
+from Tkinter import TRUE, FALSE, BOTH, SUNKEN, TOP, BOTTOM, W, LEFT, RIGHT
 import tkMessageBox
 class GetCfgSectionNameDialog(Toplevel):
     def __init__(self, parent, title, message, used_names, _htest=False):
@@ -86,7 +87,7 @@ class GetCfgSectionNameDialog(Toplevel):
         self.destroy()
 if __name__ == '__main__':
     import unittest
-    unittest.main('idlelib.idle_test.test_config_name', verbosity=2, exit=False)
+    unittest.main('idlesporklib.idle_test.test_config_name', verbosity=2, exit=False)
 
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(GetCfgSectionNameDialog)

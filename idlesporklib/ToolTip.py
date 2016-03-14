@@ -3,7 +3,11 @@
 # may be useful for some purposes in (or almost in ;) the current project scope
 # Ideas gleaned from PySol
 
-from Tkinter import *
+from Tkinter import Toplevel, Listbox, Tk, Button, Label
+from Tkinter import LEFT, SOLID, END
+import re
+from configHandler import idleConf
+theme = idleConf.GetOption('main','Theme','name')
 
 class ToolTipBase:
 
@@ -50,7 +54,7 @@ class ToolTipBase:
     def showcontents(self, text="Your text here"):
         # Override this in derived class
         label = Label(self.tipwindow, text=text, justify=LEFT,
-                      background="#ffffe0", relief=SOLID, borderwidth=1)
+                      background=idleConf.GetHighlight(theme,'tooltip','bg'), relief=SOLID, borderwidth=1)
         label.pack()
 
     def hidetip(self):
@@ -71,7 +75,7 @@ class ListboxToolTip(ToolTipBase):
         ToolTipBase.__init__(self, button)
         self.items = items
     def showcontents(self):
-        listbox = Listbox(self.tipwindow, background="#ffffe0")
+        listbox = Listbox(self.tipwindow, background=idleConf.GetHighlight(theme,'tooltip','bg'))
         listbox.pack()
         for item in self.items:
             listbox.insert(END, item)
@@ -93,5 +97,5 @@ def _tooltip(parent):
     root.mainloop()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_tooltip)

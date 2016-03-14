@@ -1,7 +1,8 @@
 import string
-from Tkinter import *
+from Tkinter import Tk, Text, Button
+import re
 
-from idlelib.Delegator import Delegator
+from idlesporklib.Delegator import Delegator
 
 #$ event <<redo>>
 #$ win <Control-y>
@@ -337,7 +338,7 @@ class CommandSequence(Command):
         return self.depth
 
 def _undo_delegator(parent):
-    from idlelib.Percolator import Percolator
+    from idlesporklib.Percolator import Percolator
     root = Tk()
     root.title("Test UndoDelegator")
     width, height, x, y = list(map(int, re.split('[x+]', parent.geometry())))
@@ -361,5 +362,5 @@ def _undo_delegator(parent):
     root.mainloop()
 
 if __name__ == "__main__":
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_undo_delegator)

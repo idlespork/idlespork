@@ -21,7 +21,7 @@ barrier, in particular frame and traceback objects.
 """
 
 import types
-from idlelib import Debugger
+from idlesporklib import Debugger
 
 debugging = 0
 

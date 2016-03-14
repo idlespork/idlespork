@@ -15,11 +15,14 @@
 # - optimize tree redraw after expand of subnode
 
 import os
-from Tkinter import *
-import imp
 
-from idlelib import ZoomHeight
-from idlelib.configHandler import idleConf
+from Tkinter import Tk, PhotoImage, Label, Entry, Frame, Canvas, Scrollbar
+from Tkinter import ALL, LEFT, END
+
+import re
+
+from idlesporklib import ZoomHeight
+from idlesporklib.configHandler import idleConf
 
 ICONDIR = "Icons"
 
@@ -463,5 +466,5 @@ def _tree_widget(parent):
     root.mainloop()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_tree_widget)

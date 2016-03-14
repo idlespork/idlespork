@@ -1,5 +1,7 @@
-from Tkinter import *
-from idlelib import macosxSupport
+from Tkinter import Frame, Scrollbar, Listbox, Menu, Tk
+import re
+
+from idlesporklib import macosxSupport
 
 class ScrolledList:
 
@@ -141,5 +143,5 @@ def _scrolled_list(parent):
     root.mainloop()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_scrolled_list)

@@ -230,4 +230,4 @@ def get_line_col(index):
 
 if __name__ == "__main__":
     import unittest
-    unittest.main('idlelib.idle_test.test_searchengine', verbosity=2, exit=False)
+    unittest.main('idlesporklib.idle_test.test_searchengine', verbosity=2, exit=False)

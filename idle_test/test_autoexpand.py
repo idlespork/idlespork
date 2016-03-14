@@ -1,9 +1,9 @@
-"""Unit tests for idlelib.AutoExpand"""
+"""Unit tests for idlesporklib.AutoExpand"""
 import unittest
 from test.test_support import requires
 from Tkinter import Text, Tk
-#from idlelib.idle_test.mock_tk import Text
-from idlelib.AutoExpand import AutoExpand
+#from idle_test.mock_tk import Text
+from idlesporklib.AutoExpand import AutoExpand
 
 
 class Dummy_Editwin:

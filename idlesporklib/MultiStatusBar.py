@@ -1,4 +1,6 @@
-from Tkinter import *
+from Tkinter import Tk, Frame, Label, Text, Button
+from Tkinter import LEFT, BOTTOM, X, W
+import re
 
 class MultiStatusBar(Frame):
 
@@ -43,5 +45,5 @@ def _multistatus_bar(parent):
     root.mainloop()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_multistatus_bar)

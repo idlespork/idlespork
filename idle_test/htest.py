@@ -23,7 +23,7 @@ End the module with
 
 if __name__ == '__main__':
     <unittest, if there is one>
-    from idlelib.idle_test.htest import run
+    from idle_test.htest import run
     run(X)
 
 To have wrapper functions and test invocation code ignored by coveragepy
@@ -66,7 +66,7 @@ OutputWindow.OutputWindow (indirectly being tested with grep test)
 '''
 
 from importlib import import_module
-from idlelib.macosxSupport import _initializeTkVariantTests
+from idlesporklib.macosxSupport import _initializeTkVariantTests
 import Tkinter as tk
 
 AboutDialog_spec = {
@@ -100,7 +100,7 @@ _color_delegator_spec = {
     'msg': "The text is sample Python code.\n"
            "Ensure components like comments, keywords, builtins,\n"
            "string, definitions, and break are correctly colored.\n"
-           "The default color scheme is in idlelib/config-highlight.def"
+           "The default color scheme is in idlesporklib/config-highlight.def"
     }
 
 ConfigDialog_spec = {
@@ -277,7 +277,7 @@ _stack_viewer_spec = {
     'file': 'StackViewer',
     'kwds': {},
     'msg': "A stacktrace for a NameError exception.\n"
-           "Expand 'idlelib ...' and '<locals>'.\n"
+           "Expand 'idlesporklib ...' and '<locals>'.\n"
            "Check that exc_value, exc_tb, and exc_type are correct.\n"
     }
 
@@ -358,7 +358,7 @@ def run(*tests):
                 test_name = k[:-5]
                 test_spec = d
                 test_spec['name'] = test_name
-                mod = import_module('idlelib.' + test_spec['file'])
+                mod = import_module('idlesporklib.' + test_spec['file'])
                 test = getattr(mod, test_name)
                 test_list.append((test_spec, test))
 

@@ -14,10 +14,10 @@ import os
 import sys
 import pyclbr
 
-from idlelib import PyShell
-from idlelib.WindowList import ListedToplevel
-from idlelib.TreeWidget import TreeNode, TreeItem, ScrolledCanvas
-from idlelib.configHandler import idleConf
+from idlesporklib import PyShell
+from idlesporklib.WindowList import ListedToplevel
+from idlesporklib.TreeWidget import TreeNode, TreeItem, ScrolledCanvas
+from idlesporklib.configHandler import idleConf
 
 file_open = None  # Method...Item and Class...Item use this.
 # Normally PyShell.flist.open, but there is no PyShell.flist for htest.
@@ -232,5 +232,5 @@ def _class_browser(parent): #Wrapper for htest
     ClassBrowser(flist, name, [dir], _htest=True)
 
 if __name__ == "__main__":
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_class_browser)

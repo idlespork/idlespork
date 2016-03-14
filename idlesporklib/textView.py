@@ -2,7 +2,9 @@
 
 """
 
-from Tkinter import *
+from Tkinter import Toplevel, Frame, Button, Text, Scrollbar
+from Tkinter import DISABLED, SUNKEN, FALSE, VERTICAL, WORD, RIGHT, Y, \
+                    BOTH, TRUE, BOTTOM, TOP, X, LEFT
 import tkMessageBox
 
 class TextViewer(Toplevel):
@@ -85,6 +87,6 @@ def view_file(parent, title, filename, encoding=None, modal=True):
 
 if __name__ == '__main__':
     import unittest
-    unittest.main('idlelib.idle_test.test_textview', verbosity=2, exit=False)
-    from idlelib.idle_test.htest import run
+    unittest.main('idlesporklib.idle_test.test_textview', verbosity=2, exit=False)
+    from idlesporklib.idle_test.htest import run
     run(TextViewer)

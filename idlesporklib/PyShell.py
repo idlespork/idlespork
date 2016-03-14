@@ -12,29 +12,44 @@ import time
 import threading
 import io
 
+from idlesporklib import Commands
+from idlesporklib import Links
+from idlesporklib.IdleHistory import History
+
+# this is a patch to allow Commands unpickling from sporktools
+sys.modules['Commands'] = Commands
+sys.modules['Links'] = Links
+
 import linecache
+########### This Patches linecache!! ###########
+import PatchLineCache
+PatchLineCache.patch_linecache()
+################################################
+
 from code import InteractiveInterpreter
-from platform import python_version, system
+from platform import system
 
 try:
-    from Tkinter import *
+    from Tkinter import Toplevel, Tk, TkVersion, PhotoImage, TclError
 except ImportError:
     print("** IDLE can't import Tkinter.\n"
           "Your Python may not be configured for Tk. **", file=sys.__stderr__)
     sys.exit(1)
 import tkMessageBox
 
-from idlelib.EditorWindow import EditorWindow, fixwordbreaks
-from idlelib.FileList import FileList
-from idlelib.ColorDelegator import ColorDelegator
-from idlelib.UndoDelegator import UndoDelegator
-from idlelib.OutputWindow import OutputWindow
-from idlelib.configHandler import idleConf
-from idlelib import rpc
-from idlelib import Debugger
-from idlelib import RemoteDebugger
-from idlelib import macosxSupport
-from idlelib import IOBinding
+from idlesporklib.EditorWindow import EditorWindow, fixwordbreaks
+from idlesporklib.FileList import FileList
+from idlesporklib.ColorDelegator import ColorDelegator
+from idlesporklib.UndoDelegator import UndoDelegator
+from idlesporklib.OutputWindow import OutputWindow
+from idlesporklib.configHandler import idleConf
+from idlesporklib import rpc
+from idlesporklib import Debugger
+from idlesporklib import RemoteDebugger
+from idlesporklib import macosxSupport
+from idlesporklib import IOBinding
+
+import HistWin
 
 IDENTCHARS = string.ascii_letters + string.digits + "_"
 HOST = '127.0.0.1' # python execution server on localhost loopback
@@ -98,29 +113,6 @@ def capture_warnings(capture):
             _warnings_showwarning = None
 
 capture_warnings(True)
-
-def extended_linecache_checkcache(filename=None,
-                                  orig_checkcache=linecache.checkcache):
-    """Extend linecache.checkcache to preserve the <pyshell#...> entries
-
-    Rather than repeating the linecache code, patch it to save the
-    <pyshell#...> entries, call the original linecache.checkcache()
-    (skipping them), and then restore the saved entries.
-
-    orig_checkcache is bound at definition time to the original
-    method, allowing it to be patched.
-    """
-    cache = linecache.cache
-    save = {}
-    for key in list(cache):
-        if key[:1] + key[-1:] == '<>':
-            save[key] = cache.pop(key)
-    orig_checkcache(filename)
-    cache.update(save)
-
-# Patch linecache.checkcache():
-linecache.checkcache = extended_linecache_checkcache
-
 
 class PyShellEditorWindow(EditorWindow):
     "Regular text edit window in IDLE, supports breakpoints"
@@ -333,7 +325,7 @@ class ModifiedColorDelegator(ColorDelegator):
     "Extend base class: colorizer for the shell window itself"
 
     def __init__(self):
-        ColorDelegator.__init__(self)
+        ColorDelegator.__init__(self, True)
         self.LoadTagDefs()
 
     def recolorize_main(self):
@@ -396,6 +388,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.subprocess_arglist = None
         self.port = PORT
         self.original_compiler_flags = self.compile.compiler.flags
+        self.subprocess_cwd = None
 
     _afterid = None
     rpcclt = None
@@ -418,8 +411,8 @@ class ModifiedInterpreter(InteractiveInterpreter):
         # run from the IDLE source directory.
         del_exitf = idleConf.GetOption('main', 'General', 'delete-exitfunc',
                                        default=False, type='bool')
-        if __name__ == 'idlelib.PyShell':
-            command = "__import__('idlelib.run').run.main(%r)" % (del_exitf,)
+        if __name__ == 'idlesporklib.PyShell':
+            command = "__import__('idlesporklib.run').run.main(%r)" % (del_exitf,)
         else:
             command = "__import__('run').main(%r)" % (del_exitf,)
         if sys.platform[:3] == 'win' and ' ' in sys.executable:
@@ -488,7 +481,6 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.rpcclt.close()
         self.unix_terminate()
         console = self.tkconsole
-        was_executing = console.executing
         console.executing = False
         self.spawn_subprocess()
         try:
@@ -623,13 +615,13 @@ class ModifiedInterpreter(InteractiveInterpreter):
         return
 
     def remote_stack_viewer(self):
-        from idlelib import RemoteObjectBrowser
+        from idlesporklib import RemoteObjectBrowser
         oid = self.rpcclt.remotequeue("exec", "stackviewer", ("flist",), {})
         if oid is None:
             self.tkconsole.root.bell()
             return
         item = RemoteObjectBrowser.StubObjectTreeItem(self.rpcclt, oid)
-        from idlelib.TreeWidget import ScrolledCanvas, TreeNode
+        from idlesporklib.TreeWidget import ScrolledCanvas, TreeNode
         top = Toplevel(self.tkconsole.root)
         theme = idleConf.CurrentTheme()
         background = idleConf.GetHighlight(theme, 'normal')['background']
@@ -690,8 +682,10 @@ class ModifiedInterpreter(InteractiveInterpreter):
         "Stuff source in the filename cache"
         filename = "<pyshell#%d>" % self.gid
         self.gid = self.gid + 1
-        lines = source.split("\n")
+        lines = [a+'\n' for a in source.split("\n")]
         linecache.cache[filename] = len(source)+1, 0, lines, filename
+        self.rpcclt.remotecall("exec", "update_linecache", (filename, (len(source)+1, 0, lines, filename)), {})
+
         return filename
 
     def prepend_syspath(self, filename):
@@ -824,6 +818,39 @@ class ModifiedInterpreter(InteractiveInterpreter):
                 except AttributeError:  # shell may have closed
                     pass
 
+    def runcmd(self, cmd):
+        """Runs the given command.
+Returns True if the caller should run endexecuting, and False otherwise"""
+        console = self.tkconsole
+        if cmd.GUI_COMMAND:
+            try:
+                cmd.run_gui(console)
+            except Exception, e:
+                print(str(e), file=console.stderr)
+            return True
+        else:
+            self.active_seq = self.rpcclt.asyncqueue(\
+                "exec", "run_cmd", (cmd,), {})
+            self.rpcclt.cvars[self.active_seq] = \
+                threading.Condition()
+            return False
+
+    def runcmd_from_source(self, source):
+        console = self.tkconsole
+        try:
+            cmd = Commands.parse(self, source)
+        except Exception, e:
+            console.beginexecuting()
+            print(str(e), file=console.stderr)
+            console.endexecuting()
+            return
+        if cmd is None:
+            return
+        console.query_prompt()
+        console.beginexecuting()
+        if self.runcmd(cmd):
+            console.endexecuting()
+
     def write(self, s):
         "Override base class method"
         self.tkconsole.stderr.write(s)
@@ -854,10 +881,26 @@ class ModifiedInterpreter(InteractiveInterpreter):
             "please wait until it is finished.",
             parent=self.tkconsole.text)
 
+    def update_subprocess_cwd(self, cwd):
+        """This function is called by the subprocess whenever the
+        cd command is executed.
+        It saves the cwd so if the subprocess will be restarted,
+        it will go to this directory immediately"""
+        self.subprocess_cwd = cwd
+
+    def get_subprocess_cwd(self):
+        """Returns the directory in which the subprocess should
+        start, or None if the subprocess should not change its
+        directory"""
+        return self.subprocess_cwd
+
+    def create_link(self, link):
+        link.gui = self.tkconsole
+        return Links.create_link_local(link)
 
 class PyShell(OutputWindow):
 
-    shell_title = "Python " + python_version() + " Shell"
+    shell_title = "Idlespork"
 
     # Override classes
     ColorDelegator = ModifiedColorDelegator
@@ -875,7 +918,6 @@ class PyShell(OutputWindow):
 
 
     # New classes
-    from idlelib.IdleHistory import History
 
     def __init__(self, flist=None):
         if use_subprocess:
@@ -902,10 +944,14 @@ class PyShell(OutputWindow):
         text.bind("<<newline-and-indent>>", self.enter_callback)
         text.bind("<<plain-newline-and-indent>>", self.linefeed_callback)
         text.bind("<<interrupt-execution>>", self.cancel_callback)
+        text.bind("<Control-z>", self.background_callback) # TODO change to configurable key
         text.bind("<<end-of-file>>", self.eof_callback)
         text.bind("<<open-stack-viewer>>", self.open_stack_viewer)
         text.bind("<<toggle-debugger>>", self.toggle_debugger)
         text.bind("<<toggle-jit-stack-viewer>>", self.toggle_jit_stack_viewer)
+        text.bind("<Alt-Return>", lambda evt: None)
+        text.bind("<<link-previous>>", lambda evt: Links.select_previous_link(self))
+        text.bind("<<link-next>>", lambda evt: Links.select_next_link(self))
         if use_subprocess:
             text.bind("<<view-restart>>", self.view_restart_mark)
             text.bind("<<restart-shell>>", self.restart_shell)
@@ -913,7 +959,7 @@ class PyShell(OutputWindow):
         self.save_stdout = sys.stdout
         self.save_stderr = sys.stderr
         self.save_stdin = sys.stdin
-        from idlelib import IOBinding
+        from idlesporklib import IOBinding
         self.stdin = PseudoInputFile(self, "stdin", IOBinding.encoding)
         self.stdout = PseudoOutputFile(self, "stdout", IOBinding.encoding)
         self.stderr = PseudoOutputFile(self, "stderr", IOBinding.encoding)
@@ -923,9 +969,15 @@ class PyShell(OutputWindow):
             sys.stderr = self.stderr
             sys.stdin = self.stdin
         #
-        self.history = self.History(self.text)
+        self.history = History(self.text)
+        self.histwin.attach_history(self.text, self.history)
         #
         self.pollinterval = 50  # millisec
+
+        Links.links_config(self)
+
+    def pre_pack(self):
+        self.histwin = HistWin.HistWin(self.top)
 
     def get_standard_extension_names(self):
         return idleConf.GetExtensions(shell_only=True)
@@ -1029,6 +1081,12 @@ class PyShell(OutputWindow):
         self.interp = None
         self.console = None
         self.flist.pyshell = None
+
+        self.history.ph.timer.cancel()
+        self.history.ph.update()
+        self.history.ph.STOPUPDATE=True
+        del self.history.ph
+
         self.history = None
         EditorWindow._close(self)
 
@@ -1037,7 +1095,10 @@ class PyShell(OutputWindow):
         return True
 
     def short_title(self):
-        return self.shell_title
+        host = socket.gethostname()
+        if host != '': host = ' @ ' + host
+        return self.shell_title + host
+
 
     COPYRIGHT = \
           'Type "copyright", "credits" or "license()" for more information.'
@@ -1080,7 +1141,7 @@ class PyShell(OutputWindow):
         if len(line) == 0:  # may be EOF if we quit our mainloop with Ctrl-C
             line = "\n"
         if isinstance(line, unicode):
-            from idlelib import IOBinding
+            from idlesporklib import IOBinding
             try:
                 line = line.encode(IOBinding.encoding)
             except UnicodeError:
@@ -1120,6 +1181,13 @@ class PyShell(OutputWindow):
             self.top.quit()  # exit the nested mainloop() in readline()
         return "break"
 
+    def background_callback(self, event=None):
+        if not self.executing:
+            self.undo.undo_event(event)
+            return
+        self.interp.rpcclt.remotecall("exec", "background_callback", (), {})
+        self.endexecuting()
+
     def eof_callback(self, event):
         if self.executing and not self.reading:
             return # Let the default binding (delete next char) take over
@@ -1147,6 +1215,10 @@ class PyShell(OutputWindow):
     def enter_callback(self, event):
         if self.executing and not self.reading:
             return # Let the default binding (insert '\n') take over
+
+        if Links.enter_on_link(self):
+            return # Link clicked
+
         # If some text is selected, recall the selection
         # (but only if this before the I/O mark)
         try:
@@ -1233,19 +1305,38 @@ class PyShell(OutputWindow):
             self.text.see("insert")
             self.text.undo_block_stop()
 
-    def runit(self):
+    def runit(self, dont_strip = False):
         line = self.text.get("iomark", "end-1c")
-        # Strip off last newline and surrounding whitespace.
-        # (To allow you to hit return twice to end a statement.)
-        i = len(line)
-        while i > 0 and line[i-1] in " \t":
-            i = i-1
-        if i > 0 and line[i-1] == "\n":
-            i = i-1
-        while i > 0 and line[i-1] in " \t":
-            i = i-1
-        line = line[:i]
-        self.interp.runsource(line)
+        mark = 'pyshell#%d' % self.interp.gid
+        self.text.mark_set(mark, 'iomark')
+        self.text.mark_gravity(mark, 'left')
+
+        if not dont_strip:
+            # Strip off last newline and surrounding whitespace.
+            # (To allow you to hit return twice to end a statement.)
+            i = len(line)
+            while i > 0 and line[i-1] in " \t":
+                i = i-1
+            if i > 0 and line[i-1] == "\n":
+                i = i-1
+            while i > 0 and line[i-1] in " \t":
+                i = i-1
+            line = line[:i]
+
+        self.interp.runcmd_from_source(line)
+
+    def update_job_description(self, line):
+        self.interp.rpcclt.remotecall("exec", "update_desc", (line,), {})
+
+    def query_prompt(self):
+        """Asks for the prompt and ignores the returned value.
+        This is done in order to reset the prompt times,
+        so it will measure the time of the command"""
+        try:
+            remotecall = self.interp.rpcclt.remotecall
+        except AttributeError:
+            return
+        remotecall("exec", "get_the_prompt", (), {})
 
     def open_stack_viewer(self, event=None):
         if self.interp.rpcclt:
@@ -1258,7 +1349,7 @@ class PyShell(OutputWindow):
                 "(sys.last_traceback is not defined)",
                 parent=self.text)
             return
-        from idlelib.StackViewer import StackBrowser
+        from idlesporklib.StackViewer import StackBrowser
         StackBrowser(self.root, self.flist)
 
     def view_restart_mark(self, event=None):

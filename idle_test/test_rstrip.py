@@ -1,6 +1,6 @@
 import unittest
-import idlelib.RstripExtension as rs
-from idlelib.idle_test.mock_idle import Editor
+import idlesporklib.RstripExtension as rs
+from idle_test.mock_idle import Editor
 
 class rstripTest(unittest.TestCase):
 
@@ -21,7 +21,7 @@ class rstripTest(unittest.TestCase):
     def test_rstrip_multiple(self):
         editor = Editor()
         #  Uncomment following to verify that test passes with real widgets.
-##        from idlelib.EditorWindow import EditorWindow as Editor
+##        from idlesporklib.EditorWindow import EditorWindow as Editor
 ##        from tkinter import Tk
 ##        editor = Editor(root=Tk())
         text = editor.text

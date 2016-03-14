@@ -3,7 +3,8 @@
 import os
 import sys
 
-from Tkinter import *
+from Tkinter import Toplevel, StringVar, Frame, Label, Entry, Button
+from Tkinter import TRUE, FALSE, BOTH, TOP, GROOVE, LEFT, W, X, BOTTOM, ACTIVE
 import tkMessageBox
 import tkFileDialog
 
@@ -162,5 +163,5 @@ class GetHelpSourceDialog(Toplevel):
         self.destroy()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(GetHelpSourceDialog)

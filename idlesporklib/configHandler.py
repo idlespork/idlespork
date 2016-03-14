@@ -24,7 +24,9 @@ import sys
 
 from ConfigParser import ConfigParser
 from Tkinter import TkVersion
-from tkFont import Font, nametofont
+from tkFont import Font
+
+printed_warnings = []
 
 class InvalidConfigType(Exception): pass
 class InvalidConfigSet(Exception): pass
@@ -188,7 +190,8 @@ class IdleConf:
         Creates it if required.
         """
         cfgDir = '.idlerc'
-        userDir = os.path.expanduser('~')
+        #userDir = os.path.expanduser('~')
+        userDir = os.environ.get('SPORKPATH', os.path.expanduser('~'))
         if userDir != '~': # expanduser() found user home dir
             if not os.path.exists(userDir):
                 warn = ('\n Warning: os.path.expanduser("~") points to\n ' +
@@ -236,10 +239,7 @@ class IdleConf:
                        ' from section %r: %r' %
                        (type, option, section,
                        self.userCfg[configType].Get(section, option, raw=raw)))
-            try:
-                print(warning, file=sys.stderr)
-            except IOError:
-                pass
+            self.show_warning(warning)
         try:
             if self.defaultCfg[configType].has_option(section,option):
                 return self.defaultCfg[configType].Get(
@@ -355,19 +355,29 @@ class IdleConf:
                 'stderr-foreground':'#000000',
                 'stderr-background':'#ffffff',
                 'console-foreground':'#000000',
-                'console-background':'#ffffff' }
+                'console-background':'#ffffff',
+                'link-foreground':'#0000ff',
+                'link-background':'#ffffff',
+                'tooltip-foreground':'#000000',
+                'tooltip-background':'#ffffe0',
+                'autocomplete-foreground':'#000000',
+                'autocomplete-background':'#ffffe0',
+                'acselect-foreground':'#ffffff',
+                'acselect-background':'#0000ff',
+                }
         for element in theme:
             if not cfgParser.has_option(themeName, element):
                 # Print warning that will return a default color
-                warning = ('\n Warning: configHandler.IdleConf.GetThemeDict'
-                           ' -\n problem retrieving theme element %r'
-                           '\n from theme %r.\n'
-                           ' returning default color: %r' %
-                           (element, themeName, theme[element]))
-                try:
-                    print(warning, file=sys.stderr)
-                except IOError:
-                    pass
+                warning = """
+ Warning: configHandler.IdleConf.GetThemeDict -
+ problem retrieving theme element %r
+ from theme %r.
+ returning default color: %r
+
+ Please go to Options -> Configure IDLE -> Highlighting
+   and choose a color for %r
+""" % (element, themeName, theme[element], element)
+                self.show_warning(warning)
             theme[element] = cfgParser.Get(
                     themeName, element, default=theme[element])
         return theme
@@ -375,7 +385,7 @@ class IdleConf:
     def CurrentTheme(self):
         """Return the name of the currently active text color theme.
 
-        idlelib.config-main.def includes this section
+        idlesporklib.config-main.def includes this section
         [Theme]
         default= 1
         name= IDLE Classic
@@ -592,7 +602,6 @@ class IdleConf:
             '<<copy>>': ['<Control-c>', '<Control-C>'],
             '<<cut>>': ['<Control-x>', '<Control-X>'],
             '<<paste>>': ['<Control-v>', '<Control-V>'],
-            '<<beginning-of-line>>': ['<Control-a>', '<Home>'],
             '<<center-insert>>': ['<Control-l>'],
             '<<close-all-windows>>': ['<Control-q>'],
             '<<close-window>>': ['<Alt-F4>'],
@@ -600,6 +609,7 @@ class IdleConf:
             '<<end-of-file>>': ['<Control-d>'],
             '<<python-docs>>': ['<F1>'],
             '<<python-context-help>>': ['<Shift-F1>'],
+            '<<history-window-toggle>>' : ['<Control-h><Control-t>'],
             '<<history-next>>': ['<Alt-n>'],
             '<<history-previous>>': ['<Alt-p>'],
             '<<interrupt-execution>>': ['<Control-c>'],
@@ -637,7 +647,9 @@ class IdleConf:
             '<<toggle-tabs>>': ['<Alt-Key-t>'],
             '<<change-indentwidth>>': ['<Alt-Key-u>'],
             '<<del-word-left>>': ['<Control-Key-BackSpace>'],
-            '<<del-word-right>>': ['<Control-Key-Delete>']
+            '<<del-word-right>>': ['<Control-Key-Delete>'],
+            '<<link-next>>' : ['<Alt-Key-r>'],
+            '<<link-previous>>' : ['<Control-Key-r>'],
             }
         if keySetName:
             for event in keyBindings:
@@ -645,15 +657,13 @@ class IdleConf:
                 if binding:
                     keyBindings[event] = binding
                 else: #we are going to return a default, print warning
-                    warning=('\n Warning: configHandler.py - IdleConf.GetCoreKeys'
-                               ' -\n problem retrieving key binding for event %r'
-                               '\n from key set %r.\n'
-                               ' returning default value: %r' %
-                               (event, keySetName, keyBindings[event]))
-                    try:
-                        print(warning, file=sys.stderr)
-                    except IOError:
-                        pass
+                    warning = """
+ Warning: configHandler.py - IdleConf.GetCoreKeys -
+ problem retrieving key binding for event %r
+ from key set %r
+ returning default value: %r""" % \
+                        (event, keySetName, keyBindings[event])
+                    self.show_warning(warning)
         return keyBindings
 
     def GetExtraHelpSourceList(self, configSet):
@@ -736,6 +746,14 @@ class IdleConf:
         "Write all loaded user configuration files to disk."
         for key in self.userCfg:
             self.userCfg[key].Save()
+
+    def show_warning(self, warning):
+        if warning not in printed_warnings:
+            printed_warnings.append(warning)
+            try:
+                print(warning, file=sys.stderr)
+            except IOError:
+                pass
 
 
 idleConf = IdleConf()

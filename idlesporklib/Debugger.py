@@ -1,9 +1,11 @@
 import os
 import bdb
-from Tkinter import *
-from idlelib.WindowList import ListedToplevel
-from idlelib.ScrolledList import ScrolledList
-from idlelib import macosxSupport
+from Tkinter import TclError
+from Tkinter import Button, Frame, Checkbutton, Label, Scrollbar, Canvas, Entry
+from Tkinter import BooleanVar
+from idlesporklib.WindowList import ListedToplevel
+from idlesporklib.ScrolledList import ScrolledList
+from idlesporklib import macosxSupport
 
 
 class Idb(bdb.Bdb):

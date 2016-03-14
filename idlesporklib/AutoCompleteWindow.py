@@ -1,9 +1,14 @@
 """
 An auto-completion window for IDLE, used by the AutoComplete extension
 """
-from Tkinter import *
-from idlelib.MultiCall import MC_SHIFT
-from idlelib.AutoComplete import COMPLETE_FILES, COMPLETE_ATTRIBUTES
+from Tkinter import Toplevel, Scrollbar, Listbox
+from Tkinter import TclError
+from Tkinter import END, VERTICAL, RIGHT, LEFT, BOTH, Y
+from idlesporklib.MultiCall import MC_SHIFT
+from idlesporklib.AutoComplete import COMPLETE_FILES, COMPLETE_ATTRIBUTES
+
+from configHandler import idleConf
+theme = idleConf.GetOption('main','Theme','name')
 
 HIDE_VIRTUAL_EVENT_NAME = "<<autocompletewindow-hide>>"
 HIDE_SEQUENCES = ("<FocusOut>", "<ButtonPress>")
@@ -131,11 +136,17 @@ class AutoCompleteWindow:
 
         if self.completions[cursel][:len(self.start)] == self.start:
             # start is a prefix of the selected completion
-            self.listbox.configure(selectbackground=self.origselbackground,
-                                   selectforeground=self.origselforeground)
+            self.listbox.configure(selectbackground=idleConf.GetHighlight(theme,'acselect','bg'),
+                                   selectforeground=idleConf.GetHighlight(theme,'acselect','fg'),
+            background=idleConf.GetHighlight(theme,'autocomplete','bg'),
+                                   foreground=idleConf.GetHighlight(theme,'autocomplete','fg')
+            )
         else:
-            self.listbox.configure(selectbackground=self.listbox.cget("bg"),
-                                   selectforeground=self.listbox.cget("fg"))
+            self.listbox.configure(selectbackground=idleConf.GetHighlight(theme,'acselect','bg'),
+                                   selectforeground=idleConf.GetHighlight(theme,'acselect','fg'),
+            background=idleConf.GetHighlight(theme,'autocomplete','bg'),
+                                   foreground=idleConf.GetHighlight(theme,'autocomplete','fg')
+            )
             # If there are more completions, show them, and call me again.
             if self.morecompletions:
                 self.completions = self.morecompletions

@@ -1,11 +1,11 @@
-"""Test idlelib.ParenMatch."""
+"""Test idlesporklib.ParenMatch."""
 # This must currently be a gui test because ParenMatch methods use
-# several text methods not defined on idlelib.idle_test.mock_tk.Text.
+# several text methods not defined on idle_test.mock_tk.Text.
 
 import unittest
 from test.test_support import requires
 from Tkinter import Tk, Text
-from idlelib.ParenMatch import ParenMatch
+from idlesporklib.ParenMatch import ParenMatch
 
 class Mock:  # 2.7 does not have unittest.mock
     def __init__(self, *args, **kwargs):

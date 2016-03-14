@@ -9,17 +9,22 @@ Note that tab width in IDLE is currently fixed at eight due to Tk issues.
 Refer to comments in EditorWindow autoindent code for details.
 
 """
-from Tkinter import *
+from Tkinter import Toplevel, Frame, Button, StringVar, BooleanVar, IntVar, \
+                    LabelFrame, Listbox, Scrollbar, Checkbutton, Label, \
+                    Scale, Text, Radiobutton, Entry, Canvas
+from Tkinter import TRUE, FALSE, TOP, BOTTOM, BOTH, LEFT, RIGHT, GROOVE, SOLID, \
+                    X, Y, W, NONE, END, DISABLED, E, HORIZONTAL, NSEW, NS, EW, \
+                    NORMAL, ANCHOR, NW, VERTICAL
 import tkMessageBox, tkColorChooser, tkFont
 
-from idlelib.configHandler import idleConf
-from idlelib.dynOptionMenuWidget import DynOptionMenu
-from idlelib.keybindingDialog import GetKeysDialog
-from idlelib.configSectionNameDialog import GetCfgSectionNameDialog
-from idlelib.configHelpSourceEdit import GetHelpSourceDialog
-from idlelib.tabbedpages import TabbedPageSet
-from idlelib.textView import view_text
-from idlelib import macosxSupport
+from idlesporklib.configHandler import idleConf
+from idlesporklib.dynOptionMenuWidget import DynOptionMenu
+from idlesporklib.keybindingDialog import GetKeysDialog
+from idlesporklib.configSectionNameDialog import GetCfgSectionNameDialog
+from idlesporklib.configHelpSourceEdit import GetHelpSourceDialog
+from idlesporklib.tabbedpages import TabbedPageSet
+from idlesporklib.textView import view_text
+from idlesporklib import macosxSupport
 
 class ConfigDialog(Toplevel):
 
@@ -57,6 +62,10 @@ class ConfigDialog(Toplevel):
             'Shell Error Text': ('error', '11'),
             'Shell Stdout Text': ('stdout', '12'),
             'Shell Stderr Text': ('stderr', '13'),
+            'Links': ('link', '14'),
+            'Tooltip': ('tooltip', '15'),
+            'Autocomplete': ('autocomplete', '16'),
+            'Selected Autocomplete': ('acselect','17'),
             }
         self.ResetChangedItems() #load initial values in changed items dict
         self.CreateWidgets()
@@ -201,6 +210,7 @@ class ConfigDialog(Toplevel):
                 font=('courier', 12, ''), cursor='hand2', width=21, height=11,
                 takefocus=FALSE, highlightthickness=0, wrap=NONE)
         text=self.textHighlightSample
+        text.tag_config('link', underline=1)
         text.bind('<Double-Button-1>', lambda e: 'break')
         text.bind('<B1-Motion>', lambda e: 'break')
         textAndTags=(
@@ -219,7 +229,12 @@ class ConfigDialog(Toplevel):
             ('cursor |', 'cursor'), ('\n ', 'normal'),
             ('shell', 'console'), (' ', 'normal'),
             ('stdout', 'stdout'), (' ', 'normal'),
-            ('stderr', 'stderr'), ('\n', 'normal'))
+            ('stderr', 'stderr'), ('\n ', 'normal'),
+            ('link', 'link'), (' ', 'normal'),
+            ('tooltip','tooltip'), ('\n ', 'normal'),
+            ('autocomplete','autocomplete'), (' ', 'normal'),
+            ('acselect','acselect'), ('\n', 'normal'),
+            )
         for txTa in textAndTags:
             text.insert(END, txTa[0], txTa[1])
         for element in self.themeElements:
@@ -730,7 +745,6 @@ class ConfigDialog(Toplevel):
 
     def LoadKeysList(self, keySetName):
         reselect = 0
-        newKeySet = 0
         if self.listBindings.curselection():
             reselect = 1
             listIndex = self.listBindings.index(ANCHOR)
@@ -997,6 +1011,8 @@ class ConfigDialog(Toplevel):
         except ValueError:
             pass
         ##font size dropdown
+        fontSize=idleConf.GetOption('main','EditorWindow','font-size',
+                default='10')
         self.optMenuFontSize.SetMenu(('7', '8', '9', '10', '11', '12', '13',
                                       '14', '16', '18', '20', '22'), fontSize )
         ##fontWeight
@@ -1215,7 +1231,6 @@ class ConfigDialog(Toplevel):
         reasonable values. The only exception to this are the 'enable*' options,
         which are boolean, and can be toggled with an True/False button.
         """
-        parent = self.parent
         frame = self.tabPages.pages['Extensions'].frame
         self.ext_defaultCfg = idleConf.defaultCfg['extensions']
         self.ext_userCfg = idleConf.userCfg['extensions']
@@ -1434,7 +1449,7 @@ class VerticalScrolledFrame(Frame):
 
 if __name__ == '__main__':
     import unittest
-    unittest.main('idlelib.idle_test.test_configdialog',
+    unittest.main('idlesporklib.idle_test.test_configdialog',
                   verbosity=2, exit=False)
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(ConfigDialog)

@@ -1,7 +1,7 @@
 # Test the functions and main class method of FormatParagraph.py
 import unittest
-from idlelib import FormatParagraph as fp
-from idlelib.EditorWindow import EditorWindow
+from idlesporklib import FormatParagraph as fp
+from idlesporklib.EditorWindow import EditorWindow
 from Tkinter import Tk, Text
 from test.test_support import requires
 
@@ -49,7 +49,7 @@ class FindTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from idlelib.idle_test.mock_tk import Text
+        from idle_test.mock_tk import Text
         cls.text = Text()
 
     def runcase(self, inserttext, stopline, expected):

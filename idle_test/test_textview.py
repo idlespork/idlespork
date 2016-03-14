@@ -4,9 +4,9 @@ import unittest
 import os
 from test.test_support import requires
 from Tkinter import Tk
-from idlelib import textView as tv
-from idlelib.idle_test.mock_idle import Func
-from idlelib.idle_test.mock_tk import Mbox
+from idlesporklib import textView as tv
+from idle_test.mock_idle import Func
+from idle_test.mock_tk import Mbox
 
 orig_mbox = tv.tkMessageBox
 

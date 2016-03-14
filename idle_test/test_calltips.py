@@ -1,5 +1,5 @@
 import unittest
-import idlelib.CallTips as ct
+import idlesporklib.CallTips as ct
 CTi = ct.CallTips()  # needed for get_entity test in 2.7
 import textwrap
 import types

@@ -9,19 +9,19 @@ python -m test.test_idle
 
 Human-mediated tests were added later in 2.7 and in 3.4.
 
-python -m idlelib.idle_test.htest
+python -m idle_test.htest
 
 
 1. Test Files
 
-The idle directory, idlelib, has over 60 xyz.py files. The idle_test
+The idle directory, idlesporklib, has over 60 xyz.py files. The idle_test
 subdirectory should contain a test_xyz.py for each, where 'xyz' is lowercased
 even if xyz.py is not. Here is a possible template, with the blanks after after
 '.' and 'as', and before and after '_' to be filled in.
 
 import unittest
 from test.support import requires
-import idlelib. as
+import idlesporklib. as
 
 class _Test(unittest.TestCase):
 
@@ -36,7 +36,7 @@ the import and unittest.main lines before the htest lines.
 
 if __name__ == "__main__":
     import unittest
-    unittest.main('idlelib.idle_test.test_', verbosity=2, exit=False)
+    unittest.main('idle_test.test_', verbosity=2, exit=False)
 
 
 
@@ -98,26 +98,26 @@ when developing tests. The 'exit=False' option is needed in xyx.py files when an
 htest follows.
 
 The following command lines also run all test methods, including
-gui tests, in test_xyz.py. (Both '-m idlelib' and '-m idlelib.idle' start
+gui tests, in test_xyz.py. (Both '-m idlesporklib' and '-m idlesporklib.idle' start
 Idle and so cannot run tests.)
 
-python -m idlelib.xyz
-python -m idlelib.idle_test.test_xyz
+python -m idlesporklib.xyz
+python -m idle_test.test_xyz
 
 The following runs all idle_test/test_*.py tests interactively.
 
 >>> import unittest
->>> unittest.main('idlelib.idle_test', verbosity=2)
+>>> unittest.main('idle_test', verbosity=2)
 
 The following run all Idle tests at a command line.  Option '-v' is the same as
 'verbosity=2'.  (For 2.7, replace 'test' in the second line with
 'test.regrtest'.)
 
-python -m unittest -v idlelib.idle_test
+python -m unittest -v idle_test
 python -m test -v -ugui test_idle
 python -m test.test_idle
 
-The idle tests are 'discovered' by idlelib.idle_test.__init__.load_tests,
+The idle tests are 'discovered' by idle_test.__init__.load_tests,
 which is also imported into test.test_idle. Normally, neither file should be
 changed when working on individual test modules. The third command runs
 unittest indirectly through regrtest. The same happens when the entire test
@@ -128,16 +128,16 @@ makes other tests fail (issue 18081).
 To run an individual Testcase or test method, extend the dotted name given to
 unittest on the command line.
 
-python -m unittest -v idlelib.idle_test.test_xyz.Test_case.test_meth
+python -m unittest -v idle_test.test_xyz.Test_case.test_meth
 
 
 4. Human-mediated Tests
 
 Human-mediated tests are widget tests that cannot be automated but need human
-verification. They are contained in idlelib/idle_test/htest.py, which has
+verification. They are contained in idle_test/htest.py, which has
 instructions.  (Some modules need an auxiliary function, identified with # htest
 # on the header line.)  The set is about complete, though some tests need
 improvement. To run all htests, run the htest file from an editor or from the
 command line with:
 
-python -m idlelib.idle_test.htest
+python -m idle_test.htest

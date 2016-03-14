@@ -9,7 +9,7 @@ Help => About IDLE: diplay About Idle dialog
 
 Help => IDLE Help: Display help.html with proper formatting.
 Doc/library/idle.rst (Sphinx)=> Doc/build/html/library/idle.html
-(help.copy_strip)=> Lib/idlelib/help.html
+(help.copy_strip)=> Lib/idlesporklib/help.html
 
 HelpParser - Parse help.html and and render to tk Text.
 
@@ -25,10 +25,10 @@ copy_strip - Copy idle.html to help.html, rstripping each line.
 show_idlehelp - Create HelpWindow.  Called in EditorWindow.help_dialog.
 """
 from HTMLParser import HTMLParser
-from os.path import abspath, dirname, isdir, isfile, join
-from Tkinter import Tk, Toplevel, Frame, Text, Scrollbar, Menu, Menubutton
+from os.path import abspath, dirname, isfile, join
+from Tkinter import Toplevel, Frame, Text, Scrollbar, Menu, Menubutton
 import tkFont as tkfont
-from idlelib.configHandler import idleConf
+from idlesporklib.configHandler import idleConf
 
 use_ttk = False # until available to import
 if use_ttk:
@@ -229,7 +229,7 @@ class HelpWindow(Toplevel):
 
 
 def copy_strip():
-    "Copy idle.html to idlelib/help.html, stripping trailing whitespace."
+    "Copy idle.html to idlesporklib/help.html, stripping trailing whitespace."
     src = join(abspath(dirname(dirname(dirname(__file__)))),
                'Doc', 'build', 'html', 'library', 'idle.html')
     dst = join(abspath(dirname(__file__)), 'help.html')
@@ -248,5 +248,5 @@ def show_idlehelp(parent):
     HelpWindow(parent, filename, 'IDLE Help')
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(show_idlehelp)

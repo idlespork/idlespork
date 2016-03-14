@@ -5,8 +5,8 @@ paren.  Paren here is used generically; the matching applies to
 parentheses, square brackets, and curly braces.
 """
 
-from idlelib.HyperParser import HyperParser
-from idlelib.configHandler import idleConf
+from idlesporklib.HyperParser import HyperParser
+from idlesporklib.configHandler import idleConf
 
 _openers = {')':'(',']':'[','}':'{'}
 CHECK_DELAY = 100 # miliseconds
@@ -175,4 +175,4 @@ class ParenMatch:
 
 if __name__ == '__main__':
     import unittest
-    unittest.main('idlelib.idle_test.test_parenmatch', verbosity=2)
+    unittest.main('idlesporklib.idle_test.test_parenmatch', verbosity=2)

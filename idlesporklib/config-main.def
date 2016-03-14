@@ -73,6 +73,6 @@ default= 1
 name= IDLE Classic Windows
 
 [History]
-cyclic=1
+cyclic=0
 
 [HelpFiles]

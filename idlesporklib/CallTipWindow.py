@@ -157,5 +157,5 @@ def _calltip_window(parent):  # htest #
     text.focus_set()
 
 if __name__=='__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_calltip_window)

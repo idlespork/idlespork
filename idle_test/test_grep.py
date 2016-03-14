@@ -1,5 +1,5 @@
 """ !Changing this line will break Test_findfile.test_found!
-Non-gui unit tests for idlelib.GrepDialog methods.
+Non-gui unit tests for idlesporklib.GrepDialog methods.
 dummy_command calls grep_it calls findfiles.
 An exception raised in one method will fail callers.
 Otherwise, tests are mostly independent.
@@ -7,11 +7,11 @@ Otherwise, tests are mostly independent.
 """
 import unittest
 from test.test_support import captured_stdout, findfile
-from idlelib.idle_test.mock_tk import Var
-from idlelib.GrepDialog import GrepDialog
+from idle_test.mock_tk import Var
+from idlesporklib.GrepDialog import GrepDialog
 import re
 
-__file__ = findfile('idlelib/idle_test') + '/test_grep.py'
+__file__ = findfile('idle_test') + '/test_grep.py'
 
 class Dummy_searchengine:
     '''GrepDialog.__init__ calls parent SearchDiabolBase which attaches the
@@ -39,7 +39,7 @@ grep = Dummy_grep()
 class FindfilesTest(unittest.TestCase):
     # findfiles is really a function, not a method, could be iterator
     # test that filename return filename
-    # test that idlelib has many .py files
+    # test that idlesporklib has many .py files
     # test that recursive flag adds idle_test .py files
     pass
 

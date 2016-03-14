@@ -11,8 +11,8 @@ import sys
 import textwrap
 import types
 
-from idlelib import CallTipWindow
-from idlelib.HyperParser import HyperParser
+from idlesporklib import CallTipWindow
+from idlesporklib.HyperParser import HyperParser
 
 
 class CallTips:
@@ -216,4 +216,4 @@ def get_arg_text(ob):
 
 if __name__ == '__main__':
     from unittest import main
-    main('idlelib.idle_test.test_calltips', verbosity=2)
+    main('idlesporklib.idle_test.test_calltips', verbosity=2)

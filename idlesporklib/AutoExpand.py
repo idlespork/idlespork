@@ -30,6 +30,7 @@ class AutoExpand:
     wordchars = string.ascii_letters + string.digits + "_"
 
     def __init__(self, editwin):
+        self.editwin = editwin
         self.text = editwin.text
         self.state = None
 
@@ -71,8 +72,7 @@ class AutoExpand:
         after = self.text.get("insert wordend", "end")
         wafter = re.findall(r"\b" + word + r"\w+\b", after)
         del after
-        if not wbefore and not wafter:
-            return []
+
         words = []
         dict = {}
         # search backwards through words before
@@ -88,7 +88,23 @@ class AutoExpand:
                 continue
             words.append(w)
             dict[w] = w
-        words.append(word)
+
+        if hasattr(self.editwin, 'history'):
+            words2 = []
+            for line in self.editwin.history.history:
+                ws = re.findall(r"\b" + word + r"\w+\b", line)
+                for w in ws:
+                    if dict.get(w):
+                        continue
+                    words2.append(w)
+                    dict[w] = w
+
+            words2.reverse()
+            words.extend(words2)
+
+        if len(words) != 0:
+            words.append(word)
+
         return words
 
     def getprevword(self):
@@ -101,4 +117,4 @@ class AutoExpand:
 
 if __name__ == '__main__':
     import unittest
-    unittest.main('idlelib.idle_test.test_autoexpand', verbosity=2)
+    unittest.main('idlesporklib.idle_test.test_autoexpand', verbosity=2)

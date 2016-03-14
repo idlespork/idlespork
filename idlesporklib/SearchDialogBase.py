@@ -181,4 +181,4 @@ class SearchDialogBase:
 if __name__ == '__main__':
     import unittest
     unittest.main(
-        'idlelib.idle_test.test_searchdialogbase', verbosity=2)
+        'idlesporklib.idle_test.test_searchdialogbase', verbosity=2)

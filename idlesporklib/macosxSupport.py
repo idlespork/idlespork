@@ -126,8 +126,8 @@ def overrideRootMenu(root, flist):
     # Due to a (mis-)feature of TkAqua the user will also see an empty Help
     # menu.
     from Tkinter import Menu
-    from idlelib import Bindings
-    from idlelib import WindowList
+    from idlesporklib import Bindings
+    from idlesporklib import WindowList
 
     closeItem = Bindings.menudefs[0][1][-2]
 
@@ -163,20 +163,20 @@ def overrideRootMenu(root, flist):
     def about_dialog(event=None):
         "Handle Help 'About IDLE' event."
         # Synchronize with EditorWindow.EditorWindow.about_dialog.
-        from idlelib import aboutDialog
+        from idlesporklib import aboutDialog
         aboutDialog.AboutDialog(root, 'About IDLE')
 
     def config_dialog(event=None):
         "Handle Options 'Configure IDLE' event."
         # Synchronize with EditorWindow.EditorWindow.config_dialog.
-        from idlelib import configDialog
+        from idlesporklib import configDialog
         root.instance_dict = flist.inversedict
         configDialog.ConfigDialog(root, 'Settings')
 
     def help_dialog(event=None):
         "Handle Help 'IDLE Help' event."
         # Synchronize with EditorWindow.EditorWindow.help_dialog.
-        from idlelib import help
+        from idlesporklib import help
         help.show_idlehelp(root)
 
     root.bind('<<about-idle>>', about_dialog)
@@ -226,7 +226,7 @@ def setupApp(root, flist):
     There are various differences among the three that affect IDLE
     behavior, primarily with menus, mouse key events, and accelerators.
     Some one-time customizations are performed here.
-    Others are dynamically tested throughout idlelib by calls to the
+    Others are dynamically tested throughout idlesporklib by calls to the
     isAquaTk(), isCarbonTk(), isCocoaTk(), isXQuartz() functions which
     are initialized here as well.
     """

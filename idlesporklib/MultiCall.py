@@ -426,5 +426,5 @@ def _multi_call(parent):
     root.mainloop()
 
 if __name__ == "__main__":
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_multi_call)

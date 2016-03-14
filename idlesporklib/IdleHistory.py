@@ -1,6 +1,9 @@
 "Implement Idle Shell history mechanism with History class"
 
-from idlelib.configHandler import idleConf
+import os
+
+from idlesporklib.configHandler import idleConf
+from idlesporklib.IdlePrehistory import Prehistory
 
 class History:
     ''' Implement Idle Shell history mechanism.
@@ -19,8 +22,12 @@ class History:
         .pointer - index into history.
         .cyclic - wrap around history list (or not).
         '''
+        if 'SPORKPATH' not in os.environ.keys():
+            self.ph = Prehistory(os.path.expanduser('~'))
+        else:
+            self.ph = Prehistory(os.environ['SPORKPATH'])
         self.text = text
-        self.history = []
+        self.history = self.ph.get()
         self.prefix = None
         self.pointer = None
         self.cyclic = idleConf.GetOption("main", "History", "cyclic", 1, "bool")
@@ -80,6 +87,7 @@ class History:
             if item[:nprefix] == prefix and len(item) > nprefix:
                 self.text.delete("iomark", "end-1c")
                 self.text.insert("iomark", item)
+                self.histwin.goto(pointer)
                 break
         self.text.see("insert")
         self.text.tag_remove("sel", "1.0", "end")
@@ -92,13 +100,19 @@ class History:
         if len(source) > 2:
             # avoid duplicates
             try:
-                self.history.remove(source)
+                idx = self.history.index(source)
+                del self.history[idx]
+                self.histwin.remove(idx)
+                self.ph.remove(source)
             except ValueError:
                 pass
             self.history.append(source)
+            self.ph.append(source)
+
+            self.histwin.store(source)
         self.pointer = None
         self.prefix = None
 
 if __name__ == "__main__":
     from unittest import main
-    main('idlelib.idle_test.test_idlehistory', verbosity=2, exit=False)
+    main('idlesporklib.idle_test.test_idlehistory', verbosity=2, exit=False)

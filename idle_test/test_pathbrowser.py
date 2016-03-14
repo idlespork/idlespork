@@ -1,8 +1,8 @@
 import unittest
 import os
 import sys
-import idlelib
-from idlelib import PathBrowser
+import idlesporklib
+from idlesporklib import PathBrowser
 
 class PathBrowserTest(unittest.TestCase):
 
@@ -12,7 +12,7 @@ class PathBrowserTest(unittest.TestCase):
         d.GetSubList()
         self.assertEqual('', d.GetText())
 
-        dir = os.path.split(os.path.abspath(idlelib.__file__))[0]
+        dir = os.path.split(os.path.abspath(idlesporklib.__file__))[0]
         self.assertEqual(d.ispackagedir(dir), True)
         self.assertEqual(d.ispackagedir(dir + '/Icons'), False)
 

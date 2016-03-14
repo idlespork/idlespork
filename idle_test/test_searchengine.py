@@ -10,9 +10,9 @@ import unittest
 #from test.test_support import requires
 from Tkinter import  BooleanVar, StringVar, TclError  # ,Tk, Text
 import tkMessageBox
-from idlelib import SearchEngine as se
-from idlelib.idle_test.mock_tk import Var, Mbox
-from idlelib.idle_test.mock_tk import Text as mockText
+from idlesporklib import SearchEngine as se
+from idle_test.mock_tk import Var, Mbox
+from idle_test.mock_tk import Text as mockText
 
 def setUpModule():
     # Replace s-e module tkinter imports other than non-gui TclError.

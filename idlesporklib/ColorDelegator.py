@@ -2,8 +2,9 @@ import time
 import re
 import keyword
 import __builtin__
-from idlelib.Delegator import Delegator
-from idlelib.configHandler import idleConf
+from idlesporklib.Delegator import Delegator
+from idlesporklib.configHandler import idleConf
+from idlesporklib import Commands
 
 DEBUG = False
 
@@ -11,7 +12,7 @@ def any(name, alternates):
     "Return a named group pattern matching list of alternates."
     return "(?P<%s>" % name + "|".join(alternates) + ")"
 
-def make_pat():
+def make_pat(interactive=False):
     kw = r"\b" + any("KEYWORD", keyword.kwlist) + r"\b"
     builtinlist = [str(name) for name in dir(__builtin__)
                                         if not name.startswith('_')]
@@ -28,18 +29,26 @@ def make_pat():
     sq3string = stringprefix + r"'''[^'\\]*((\\.|'(?!''))[^'\\]*)*(''')?"
     dq3string = stringprefix + r'"""[^"\\]*((\\.|"(?!""))[^"\\]*)*(""")?'
     string = any("STRING", [sq3string, dq3string, sqstring, dqstring])
-    return kw + "|" + builtin + "|" + comment + "|" + string +\
-           "|" + any("SYNC", [r"\n"])
 
-prog = re.compile(make_pat(), re.S)
+    if interactive:
+        command = r"^\s*" + any("COMMAND", Commands.command_kws) + r"(\s|$)"
+    else:
+        command = None
+
+    all = [kw, command, builtin, comment, string]
+    all = [x for x in all if x is not None]
+    return "|".join(all) + "|" + any("SYNC", [r"\n"])
+
 idprog = re.compile(r"\s+(\w+)", re.S)
+argprog = re.compile(r".*?\s(-\w)", re.S)
 
 class ColorDelegator(Delegator):
 
-    def __init__(self):
+    def __init__(self, interactive=False):
         Delegator.__init__(self)
-        self.prog = prog
+        self.prog = re.compile(make_pat(interactive), re.S)
         self.idprog = idprog
+        self.argprog = argprog
         self.LoadTagDefs()
 
     def setdelegate(self, delegate):
@@ -74,6 +83,9 @@ class ColorDelegator(Delegator):
             "ERROR": idleConf.GetHighlight(theme, "error"),
             # The following is used by ReplaceDialog:
             "hit": idleConf.GetHighlight(theme, "hit"),
+            "COMMAND": idleConf.GetHighlight(theme, "keyword"),
+            "COMMAND_PARAMS": idleConf.GetHighlight(theme, "string"),
+            "LINK" : idleConf.GetHighlight(theme, "link")
             }
 
         if DEBUG: print 'tagdefs',self.tagdefs
@@ -199,6 +211,7 @@ class ColorDelegator(Delegator):
                 chars = chars + line
                 m = self.prog.search(chars)
                 while m:
+                    m_end = m.end()
                     for key, value in m.groupdict().items():
                         if value:
                             a, b = m.span(key)
@@ -212,7 +225,17 @@ class ColorDelegator(Delegator):
                                     self.tag_add("DEFINITION",
                                                  head + "+%dc" % a,
                                                  head + "+%dc" % b)
-                    m = self.prog.search(chars, m.end())
+                            elif key == 'COMMAND':
+                                m_end = len(chars)
+                                while True:
+                                    m1 = self.argprog.match(chars, b)
+                                    if not m1:
+                                        break
+                                    a, b = m1.span(1)
+                                    self.tag_add("COMMAND_PARAMS",
+                                                 head + "+%dc" % a,
+                                                 head + "+%dc" % b)
+                    m = self.prog.search(chars, m_end)
                 if "SYNC" in self.tag_names(next + "-1c"):
                     head = next
                     chars = ""
@@ -237,7 +260,7 @@ class ColorDelegator(Delegator):
 
 def _color_delegator(parent):  # htest #
     from Tkinter import Toplevel, Text
-    from idlelib.Percolator import Percolator
+    from idlesporklib.Percolator import Percolator
 
     top = Toplevel(parent)
     top.title("Test ColorDelegator")
@@ -254,5 +277,5 @@ def _color_delegator(parent):  # htest #
     p.insertfilter(d)
 
 if __name__ == "__main__":
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_color_delegator)

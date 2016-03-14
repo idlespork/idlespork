@@ -92,8 +92,51 @@ enable_editor=True
 [ScriptBinding_cfgBindings]
 run-module=<Key-F5>
 check-module=<Alt-Key-x>
+exec-line=<Key-F7>
 
 [ZoomHeight]
 enable=True
 [ZoomHeight_cfgBindings]
 zoom-height=<Alt-Key-2>
+
+[BetterOutput]
+enable=1
+
+[Squeezer]
+enable=1
+max-num-of-lines=30
+preview-command-posix=(xterm -e less %(fn)s; rm -f %(fn)s) &
+preview-command-win=notepad %(fn)s
+preview-command-mac=
+[Squeezer_cfgBindings]
+squeeze-last-output=<Control-Key-equal>
+expand-last-squeezed=<Control-Key-plus> <Control-Shift-Key-equal> <Control-Shift-Key-plus>
+preview-last-squeezed=<Control-Key-minus>
+
+[BasicActions]
+enable=1
+[BasicActions_bindings]
+middle-clicked=<ButtonPress-2>
+middle-released=<ButtonRelease-2>
+[BasicActions_cfgBindings]
+move-up=<Key-Up>
+sel-up=<Shift-Key-Up>
+move-down=<Key-Down>
+sel-down=<Shift-Key-Down>
+move-char-left=<Key-Left>
+sel-char-left=<Shift-Key-Left>
+move-char-right=<Key-Right>
+sel-char-right=<Shift-Key-Right>
+move-word-left=<Control-Key-Left>
+sel-word-left=<Shift-Control-Key-Left>
+move-word-right=<Control-Key-Right>
+sel-word-right=<Shift-Control-Key-Right>
+move-linestart=<Key-Home>
+sel-linestart=<Shift-Key-Home>
+del-to-linestart=<Control-Key-u>
+move-lineend=<Key-End>
+sel-lineend=<Shift-Key-End>
+move-docstart=<Control-Key-Home>
+sel-docstart=<Shift-Control-Key-Home>
+move-docend=<Control-Key-End>
+sel-docend=<Shift-Control-Key-End>

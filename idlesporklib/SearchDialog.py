@@ -1,7 +1,9 @@
-from Tkinter import *
+from Tkinter import TclError, Tk, Text, Button
+from Tkinter import SEL, END
+import re
 
-from idlelib import SearchEngine
-from idlelib.SearchDialogBase import SearchDialogBase
+from idlesporklib import SearchEngine
+from idlesporklib.SearchDialogBase import SearchDialogBase
 
 def _setup(text):
     root = text._root()
@@ -85,5 +87,5 @@ def _search_dialog(parent):
     button.pack()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_search_dialog)

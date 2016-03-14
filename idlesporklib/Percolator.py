@@ -1,5 +1,5 @@
-from idlelib.WidgetRedirector import WidgetRedirector
-from idlelib.Delegator import Delegator
+from idlesporklib.WidgetRedirector import WidgetRedirector
+from idlesporklib.Delegator import Delegator
 
 class Percolator:
 
@@ -99,5 +99,5 @@ def _percolator(parent):
     cb2.pack()
 
 if __name__ == "__main__":
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_percolator)

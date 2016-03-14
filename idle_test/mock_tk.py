@@ -56,7 +56,7 @@ class Mbox(object):
     This module was 'tkMessageBox' in 2.x; hence the 'import as' in  3.x.
     Example usage in test_module.py for testing functions in module.py:
     ---
-from idlelib.idle_test.mock_tk import Mbox
+from idle_test.mock_tk import Mbox
 import module
 
 orig_mbox = module.tkMessageBox

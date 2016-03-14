@@ -16,8 +16,8 @@ showwarning = warnings.showwarning
 # and default showwarnings has already been replaced.
 running_in_idle = 'idle' in showwarning.__name__
 
-from idlelib import run
-from idlelib import PyShell as shell
+from idlesporklib import run
+from idlesporklib import PyShell as shell
 
 # The following was generated from PyShell.idle_formatwarning
 # and checked as matching expectation.
@@ -72,7 +72,7 @@ class ImportWarnTest(unittest.TestCase):
     def test_idlever(self):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            import idlelib.idlever
+            import idlesporklib.idlever
             self.assertEqual(len(w), 1)
             self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
             self.assertIn("version", str(w[-1].message))

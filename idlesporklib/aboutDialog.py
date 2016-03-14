@@ -3,8 +3,10 @@
 """
 import os
 from sys import version
-from Tkinter import *
-from idlelib import textView
+from Tkinter import Toplevel, Frame, Button, Label
+from Tkinter import TRUE, FALSE
+from Tkinter import SUNKEN, BOTTOM, TOP, BOTH, X, W, LEFT, EW, NSEW
+from idlesporklib import textView
 
 class AboutDialog(Toplevel):
     """Modal about dialog for idle
@@ -141,5 +143,5 @@ class AboutDialog(Toplevel):
         self.destroy()
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(AboutDialog)

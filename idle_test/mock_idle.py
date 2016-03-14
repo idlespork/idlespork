@@ -1,9 +1,9 @@
-'''Mock classes that imitate idlelib modules or classes.
+'''Mock classes that imitate idlesporklib modules or classes.
 
 Attributes and methods will be added as needed for tests.
 '''
 
-from idlelib.idle_test.mock_tk import Text
+from idle_test.mock_tk import Text
 
 class Func(object):
     '''Mock function captures args and returns result set by test.

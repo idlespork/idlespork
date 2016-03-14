@@ -169,7 +169,7 @@ def _widget_redirector(parent):  # htest #
 
 if __name__ == "__main__":
     import unittest
-    unittest.main('idlelib.idle_test.test_widgetredir',
+    unittest.main('idlesporklib.idle_test.test_widgetredir',
                   verbosity=2, exit=False)
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_widget_redirector)

@@ -16,7 +16,7 @@ Known problems with comment reformatting:
 """
 
 import re
-from idlelib.configHandler import idleConf
+from idlesporklib.configHandler import idleConf
 
 class FormatParagraph:
 
@@ -191,5 +191,5 @@ def get_comment_header(line):
 
 if __name__ == "__main__":
     import unittest
-    unittest.main('idlelib.idle_test.test_formatparagraph',
+    unittest.main('idlesporklib.idle_test.test_formatparagraph',
             verbosity=2, exit=False)

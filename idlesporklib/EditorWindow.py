@@ -3,21 +3,23 @@ import os
 import platform
 import re
 import imp
-from Tkinter import *
+from Tkinter import Menu, Frame, Scrollbar, TkVersion, Text, BooleanVar
+from Tkinter import TclError
+from Tkinter import TOP, BOTTOM, RIGHT, LEFT, X, Y, BOTH, END, SEL, INSERT
 import tkSimpleDialog
 import tkMessageBox
 import webbrowser
 
-from idlelib.MultiCall import MultiCallCreator
-from idlelib import WindowList
-from idlelib import SearchDialog
-from idlelib import GrepDialog
-from idlelib import ReplaceDialog
-from idlelib import PyParse
-from idlelib.configHandler import idleConf
-from idlelib import aboutDialog, textView, configDialog
-from idlelib import macosxSupport
-from idlelib import help
+from idlesporklib.MultiCall import MultiCallCreator
+from idlesporklib import WindowList
+from idlesporklib import SearchDialog
+from idlesporklib import GrepDialog
+from idlesporklib import ReplaceDialog
+from idlesporklib import PyParse
+from idlesporklib.configHandler import idleConf
+from idlesporklib import aboutDialog, textView, configDialog
+from idlesporklib import macosxSupport
+from idlesporklib import help
 
 # The default tab setting for a Text widget, in average-width characters.
 TK_TABWIDTH_DEFAULT = 8
@@ -118,13 +120,13 @@ helpDialog = HelpDialog()  # singleton instance, no longer used
 
 
 class EditorWindow(object):
-    from idlelib.Percolator import Percolator
-    from idlelib.ColorDelegator import ColorDelegator
-    from idlelib.UndoDelegator import UndoDelegator
-    from idlelib.IOBinding import IOBinding, filesystemencoding, encoding
-    from idlelib import Bindings
+    from idlesporklib.Percolator import Percolator
+    from idlesporklib.ColorDelegator import ColorDelegator
+    from idlesporklib.UndoDelegator import UndoDelegator
+    from idlesporklib.IOBinding import IOBinding, filesystemencoding, encoding
+    from idlesporklib import Bindings
     from Tkinter import Toplevel
-    from idlelib.MultiStatusBar import MultiStatusBar
+    from idlesporklib.MultiStatusBar import MultiStatusBar
 
     help_url = None
 
@@ -244,7 +246,6 @@ class EditorWindow(object):
         text.bind("<Right>", self.move_at_edge_if_selection(1))
         text.bind("<<del-word-left>>", self.del_word_left)
         text.bind("<<del-word-right>>", self.del_word_right)
-        text.bind("<<beginning-of-line>>", self.home_callback)
 
         if flist:
             flist.inversedict[self] = key
@@ -260,6 +261,7 @@ class EditorWindow(object):
         vbar.pack(side=RIGHT, fill=Y)
         text['yscrollcommand'] = vbar.set
         text['font'] = idleConf.GetFont(self.root, 'main', 'EditorWindow')
+        self.pre_pack()
         text_frame.pack(side=LEFT, fill=BOTH, expand=1)
         text.pack(side=TOP, fill=BOTH, expand=1)
         text.focus_set()
@@ -363,51 +365,47 @@ class EditorWindow(object):
                     # byte-to-byte conversion
                     return filename.decode('iso8859-1')
 
+    def pre_pack(self):
+        return
+
     def new_callback(self, event):
         dirname, basename = self.io.defaultfilename()
         self.flist.new(dirname)
         return "break"
 
-    def home_callback(self, event):
-        if (event.state & 4) != 0 and event.keysym == "Home":
-            # state&4==Control. If <Control-Home>, use the Tk binding.
-            return
-        if self.text.index("iomark") and \
-           self.text.compare("iomark", "<=", "insert lineend") and \
-           self.text.compare("insert linestart", "<=", "iomark"):
-            # In Shell on input line, go to just after prompt
-            insertpt = int(self.text.index("iomark").split(".")[1])
-        else:
-            line = self.text.get("insert linestart", "insert lineend")
-            for insertpt in xrange(len(line)):
-                if line[insertpt] not in (' ','\t'):
-                    break
-            else:
-                insertpt=len(line)
-        lineat = int(self.text.index("insert").split('.')[1])
-        if insertpt == lineat:
-            insertpt = 0
-        dest = "insert linestart+"+str(insertpt)+"c"
-        if (event.state&1) == 0:
-            # shift was not pressed
-            self.text.tag_remove("sel", "1.0", "end")
-        else:
-            if not self.text.index("sel.first"):
-                self.text.mark_set("my_anchor", "insert")  # there was no previous selection
-            else:
-                if self.text.compare(self.text.index("sel.first"), "<", self.text.index("insert")):
-                    self.text.mark_set("my_anchor", "sel.first") # extend back
-                else:
-                    self.text.mark_set("my_anchor", "sel.last") # extend forward
-            first = self.text.index(dest)
-            last = self.text.index("my_anchor")
-            if self.text.compare(first,">",last):
-                first,last = last,first
-            self.text.tag_remove("sel", "1.0", "end")
-            self.text.tag_add("sel", first, last)
-        self.text.mark_set("insert", dest)
+    def _move_cursor(self, pos, shifted=0):
+        """
+        Move the current insert into pos.
+        shifted should be true if the Shift key is pressed.
+        """
+        previnsert = self.text.index("insert")
+        self.text.mark_set("insert", pos)
         self.text.see("insert")
-        return "break"
+        curinsert = self.text.index("insert")
+
+        if shifted:
+            # The Shift key is pressed, so we select/deselect.
+            if self.text.compare(curinsert, "<", previnsert):
+                region = (curinsert, previnsert)
+            else:
+                region = (previnsert, curinsert)
+            selreg = self.text.tag_ranges("sel")
+            if selreg:
+                self.text.tag_remove("sel", selreg[0], selreg[1])
+                if self.text.compare(region[0], "<", selreg[0]):
+                    self.text.tag_add("sel", region[0], selreg[0])
+                else:
+                    self.text.tag_add("sel", selreg[0], region[0])
+                if self.text.compare(region[1], "<", selreg[1]):
+                    self.text.tag_add("sel", region[1], selreg[1])
+                else:
+                    self.text.tag_add("sel", selreg[1], region[1])
+            else:
+                self.text.tag_add("sel", region[0], region[1])
+        else:
+            # The Shift key isn't pressed, so we remove any existing
+            # selection
+            self.text.tag_remove("sel", "1.0", "end")
 
     def set_status_bar(self):
         self.status_bar = self.MultiStatusBar(self.top)
@@ -574,6 +572,8 @@ class EditorWindow(object):
         return "break"
 
     def paste(self,event):
+        if self.text.tag_ranges("sel"):
+            self.text.delete(*self.text.tag_ranges("sel"))
         self.text.event_generate("<<Paste>>")
         self.text.see("insert")
         return "break"
@@ -648,6 +648,12 @@ class EditorWindow(object):
         text.mark_set("insert", "%d.0" % lineno)
         text.see("insert")
 
+    def mark_line(self, lineno):
+        self.text.mark_set("insert", "%d.0" % lineno)
+        self.text.selection_clear()
+        self.text.tag_add(SEL, "%d.0" % lineno, "%d.end" % lineno)
+        self.text.see("insert")
+
     def open_module(self, event=None):
         # XXX Shouldn't this be in IOBinding or in FileList?
         try:
@@ -691,11 +697,11 @@ class EditorWindow(object):
                 return
         head, tail = os.path.split(filename)
         base, ext = os.path.splitext(tail)
-        from idlelib import ClassBrowser
+        from idlesporklib import ClassBrowser
         ClassBrowser.ClassBrowser(self.flist, base, [head])
 
     def open_path_browser(self, event=None):
-        from idlelib import PathBrowser
+        from idlesporklib import PathBrowser
         PathBrowser.PathBrowser(self.flist)
 
     def gotoline(self, lineno):
@@ -1700,5 +1706,5 @@ def _editor_window(parent):  # htest #
 
 
 if __name__ == '__main__':
-    from idlelib.idle_test.htest import run
+    from idlesporklib.idle_test.htest import run
     run(_editor_window)

@@ -6,8 +6,10 @@ a window with all available names, for the user to select from.
 import os
 import sys
 import string
+import keyword
+import PyShell
 
-from idlelib.configHandler import idleConf
+from idlesporklib.configHandler import idleConf
 
 # This string includes all chars that may be in a file name (without a path
 # separator)
@@ -18,8 +20,8 @@ ID_CHARS = string.ascii_letters + string.digits + "_"
 # These constants represent the two different types of completions
 COMPLETE_ATTRIBUTES, COMPLETE_FILES = range(1, 2+1)
 
-from idlelib import AutoCompleteWindow
-from idlelib.HyperParser import HyperParser
+from idlesporklib import AutoCompleteWindow
+from idlesporklib.HyperParser import HyperParser
 
 import __main__
 
@@ -59,10 +61,16 @@ class AutoComplete:
             self.autocompletewindow.hide_window()
             self.autocompletewindow = None
 
+    def is_executing(self):
+        return isinstance(self.editwin, PyShell.PyShell) and \
+            self.editwin.executing
+
     def force_open_completions_event(self, event):
         """Happens when the user really wants to open a completion list, even
         if a function call is needed.
         """
+        if self.is_executing():
+            return
         self.open_completions(True, False, True)
 
     def try_open_completions_event(self, event):
@@ -70,6 +78,10 @@ class AutoComplete:
         really necessary, for example after an dot, so function
         calls won't be made.
         """
+
+        if self.is_executing():
+            return
+
         lastchar = self.text.get("insert-1c")
         if lastchar == ".":
             self._open_completions_later(False, False, False,
@@ -123,7 +135,8 @@ class AutoComplete:
         hp = HyperParser(self.editwin, "insert")
         curline = self.text.get("insert linestart", "insert")
         i = j = len(curline)
-        if hp.is_in_string() and (not mode or mode==COMPLETE_FILES):
+        if (hp.is_in_string() or hp.is_in_command()) \
+            and (not mode or mode==COMPLETE_FILES):
             self._remove_autocomplete_window()
             mode = COMPLETE_FILES
             while i and curline[i-1] in FILENAME_CHARS:
@@ -184,19 +197,19 @@ class AutoComplete:
                 if what == "":
                     namespace = __main__.__dict__.copy()
                     namespace.update(__main__.__builtins__.__dict__)
-                    bigl = eval("dir()", namespace)
-                    bigl.sort()
+                    bigl = eval("dir()", namespace) + keyword.kwlist
+                    bigl = sorted(set(bigl))
                     if "__all__" in bigl:
-                        smalll = sorted(eval("__all__", namespace))
+                        smalll = sorted(set(eval("__all__", namespace)))
                     else:
                         smalll = [s for s in bigl if s[:1] != '_']
                 else:
                     try:
                         entity = self.get_entity(what)
                         bigl = dir(entity)
-                        bigl.sort()
+                        bigl = sorted(set(bigl))
                         if "__all__" in bigl:
-                            smalll = sorted(entity.__all__)
+                            smalll = sorted(set(entity.__all__))
                         else:
                             smalll = [s for s in bigl if s[:1] != '_']
                     except:
@@ -206,9 +219,10 @@ class AutoComplete:
                 if what == "":
                     what = "."
                 try:
+                    from os.path import normcase
                     expandedpath = os.path.expanduser(what)
                     bigl = os.listdir(expandedpath)
-                    bigl.sort()
+                    bigl = sorted(set(bigl), cmp=lambda x,y: cmp(normcase(x), normcase(y)))
                     smalll = [s for s in bigl if s[:1] != '.']
                 except OSError:
                     return [], []
@@ -226,4 +240,4 @@ class AutoComplete:
 
 if __name__ == '__main__':
     from unittest import main
-    main('idlelib.idle_test.test_autocomplete', verbosity=2)
+    main('idlesporklib.idle_test.test_autocomplete', verbosity=2)
