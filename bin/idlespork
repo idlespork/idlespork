@@ -1,0 +1,3 @@
+#!/usr/bin/env python
+import idlesporklib.PyShell
+idlesporklib.PyShell.main()
