@@ -97,8 +97,11 @@ class HyperParser:
                 in ('"', "'"))
 
     def is_in_command(self):
+        words = self.rawtext.strip().split()
+        if len(words) == 0:
+            return False
         for c in Commands.command_names:
-            if self.rawtext.strip().startswith(c):
+            if words[0] == c:
                 return True
         return False
 
