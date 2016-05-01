@@ -27,10 +27,10 @@ class Prehistory(object):
                 self.history = self.load_file()
                 self.sessid = max(self.history.keys())+1
             except Exception:
-                print
-                print 'Unable to load prehistory.'
-                print 'Removing your prehistory file will probably fix it.'
-                print 'You can do it by running: rm "%s"' % self.PATH
+                print()
+                print('Unable to load prehistory.')
+                print('Removing your prehistory file will probably fix it.')
+                print('You can do it by running: rm "%s"' % self.PATH)
                 self.noprehist = True
         if (len(self.history) > NSESSIONS_TO_SAVE) and (sum([len(x) for x in self.history.values()]) > MAX_LEN):
             del self.history[min(self.history.keys())]
@@ -91,8 +91,8 @@ class Prehistory(object):
             currhist = self.load_file()
             currhist[self.sessid] = self.history[self.sessid]
             self.dump_file(currhist)
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
             return
 
     def autoupdate(self):

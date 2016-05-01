@@ -2,12 +2,19 @@
     Parsing and handling of shell commands
 """
 
+from __future__ import print_function
+
 import re
-import cStringIO
+import io
 import os
-import compiler
-import CompilerPatch
-CompilerPatch.patch_compiler()
+
+try:
+    import compiler
+    from idlesporklib import CompilerPatch
+    CompilerPatch.patch_compiler()
+except ImportError:
+    pass
+
 import time
 import parser
 import symbol
@@ -49,21 +56,20 @@ jobs [-a | -o <num> | -g <varname> | -t <num> | -h]
 
     def run(self, world):
         if self.show_help:
-            print >>world.remote_stdout, self.descr()
+            print(self.descr(), file=world.remote_stdout)
         elif self.a:
-            print >>world.remote_stdout, world.jobs.alljobs(),
+            print(world.jobs.alljobs(), end=' ', file=world.remote_stdout)
         elif self.o is not None:
             try:
-                print >>world.remote_stdout, world.jobs[self.o].getoutput(),
+                print(world.jobs[self.o].getoutput(), end=' ', file=world.remote_stdout)
             except KeyError:
-                print >>world.remote_stderr, \
-                    "Job [%d] does not exist" % self.o
+                print("Job [%d] does not exist" % self.o, file=world.remote_stderr)
         elif self.g is not None:
             setattr(world.main, self.g, world.jobs)
         elif self.t is not None:
             world.jobs.toggleoutput(self.t)
         else:
-            print >>world.remote_stdout, world.jobs
+            print(world.jobs, file=world.remote_stdout)
 
 class KillCommand(Command):
     CMD = 'kill'
@@ -81,12 +87,12 @@ kill [n | -h]
 
     def run(self, world):
         if self.show_help:
-            print >>world.remote_stdout, self.descr()
+            print(self.descr(), file=world.remote_stdout)
             return
         try:
             j = world.jobs[self.jobid]
         except KeyError:
-            print >>world.remote_stderr, 'Jobs [%d] does not exist' % self.jobid
+            print('Jobs [%d] does not exist' % self.jobid, file=world.remote_stderr)
             return
         j.kill()
 
@@ -109,15 +115,15 @@ cd path
 
     def run(self, world):
         if self.show_help:
-            print >>world.remote_stdout, self.descr()
+            print(self.descr(), file=world.remote_stdout)
             return
         try:
             os.chdir(os.path.expanduser(self.dir))
-        except Exception, e:
-            print >>world.remote_stderr, e
+        except Exception as e:
+            print(e, file=world.remote_stderr)
             return
         world.interp.update_subprocess_cwd(os.getcwd())
-        print >>world.remote_stdout, "--> %s" % os.getcwd()
+        print("--> %s" % os.getcwd(), file=world.remote_stdout)
 
 
 class ShellCommand(Command):
@@ -132,7 +138,7 @@ class ShellCommand(Command):
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         s = p.stdout.read(100)
         if self.varname:
-            output = cStringIO.StringIO() 
+            output = io.StringIO()
         else:
             output = world.remote_stdout 
 
@@ -159,7 +165,7 @@ Opens a file to edit"""
 
     def run(self,world):
         assert self.show_help
-        print >>world.remote_stdout, self.descr()
+        print(self.descr(), file=world.remote_stdout)
         
 
     def run_gui(self, gui):
@@ -224,7 +230,7 @@ def get_code(x):
             return inspect.getsource(x)
         except IOError:
             pass
-        except TypeError,e:
+        except TypeError as e:
             if 'built-in' in e.message:
                 return 'built-in'
     else:
@@ -246,14 +252,14 @@ class CodeCommand(Command):
 
         if self.show_help:
             if self.show_help=='get_code':
-                print get_code(eval(self.code, world.main.__dict__))
+                print(get_code(eval(self.code, world.main.__dict__)))
             else:
-                print helper(eval(self.code, world.main.__dict__))
+                print(helper(eval(self.code, world.main.__dict__)))
         elif self.bg_run:
             if isinstance(self.bg_run,tuple) and self.bg_run[0]=='after':
                 jnum = world.executive.runcode_after(self.code, self.source, self.bg_run[1])
                 if jnum is not None:
-                    print '**** [%d] - Queued after [%d] ****'%(jnum,self.bg_run[1])
+                    print('**** [%d] - Queued after [%d] ****'%(jnum,self.bg_run[1]))
             else:
                 world.executive.runcode_bg(self.code, self.source)
         else:
@@ -307,19 +313,19 @@ def _maybe_compile(compiler, source, filename, symbol):
 
     try:
         code1 = compiler(source + "\n", filename, symbol)
-    except SyntaxError, err1:
+    except SyntaxError as err1:
         e1 = err1.args
 
     try:
         compiler(source + "\n\n", filename, symbol)
-    except SyntaxError, err2:
+    except SyntaxError as err2:
         e2 = err2.args
 
     if code:
         return code
 
     if not code1 and e1 == e2:
-        raise SyntaxError, err1
+        raise SyntaxError(err1)
 
     #if not code1 and repr(err1) == repr(err2):
     #    raise SyntaxError, err1
@@ -403,7 +409,7 @@ class SporkCommand(Command):
     CMD = 'spork'
     COMMANDS = [SporkTitleCommand, HistoryToggleCommand, SporkRestartCommand]
     COMMANDS_DICT = dict([(x.CMD, x) for x in COMMANDS])
-    SUBS = COMMANDS_DICT.keys()
+    SUBS = list(COMMANDS_DICT.keys())
 
     def descr(self):
         cmds = [(x.CMD, x.short_descr) for x in SporkCommand.COMMANDS]
@@ -423,7 +429,7 @@ possible commands:
             else:
                 raise EndOfLineException("Possible commands: %s" %
                                 ', '.join([x.CMD for x in self.COMMANDS]))
-        except KeyError, e:
+        except KeyError as e:
             raise UnkCmdError("Unknown command '%s'" % str(e.message)) 
 
         if not self.show_help:
@@ -435,9 +441,9 @@ possible commands:
     def run(self,world):
         if self.show_help:
             if hasattr(self,'command'):
-                print >>world.remote_stdout, self.command.descr()
+                print(self.command.descr(), file=world.remote_stdout)
             else:
-                print >>world.remote_stdout, self.descr()
+                print(self.descr(), file=world.remote_stdout)
         else:
             self.command.run(world)
     

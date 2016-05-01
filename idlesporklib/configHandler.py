@@ -19,6 +19,7 @@ configuration problem notification and resolution.
 # TODOs added Oct 2014, tjr
 
 from __future__ import print_function
+import idlesporklib.compat
 import os
 import sys
 

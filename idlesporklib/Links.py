@@ -1,3 +1,4 @@
+import idlesporklib.compat
 from Tkinter import SEL, INSERT
 
 PREFIX = '{{{IDLESPORK_LINK:'

@@ -22,7 +22,7 @@ sys.modules['Links'] = Links
 
 import linecache
 ########### This Patches linecache!! ###########
-import PatchLineCache
+import idlesporklib.PatchLineCache as PatchLineCache
 PatchLineCache.patch_linecache()
 ################################################
 
@@ -766,7 +766,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         if self.rpcclt:
             self.rpcclt.remotequeue("exec", "runcode", (code,), {})
         else:
-            exec code in self.locals
+            exec(code, self.locals)
         return 1
 
     def runcode(self, code):
@@ -786,7 +786,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
             elif debugger:
                 debugger.run(code, self.locals)
             else:
-                exec code in self.locals
+                exec(code, self.locals)
         except SystemExit:
             if not self.tkconsole.closing:
                 if tkMessageBox.askyesno(
@@ -825,7 +825,7 @@ Returns True if the caller should run endexecuting, and False otherwise"""
         if cmd.GUI_COMMAND:
             try:
                 cmd.run_gui(console)
-            except Exception, e:
+            except Exception as e:
                 print(str(e), file=console.stderr)
             return True
         else:
@@ -839,7 +839,7 @@ Returns True if the caller should run endexecuting, and False otherwise"""
         console = self.tkconsole
         try:
             cmd = Commands.parse(self, source)
-        except Exception, e:
+        except Exception as e:
             console.beginexecuting()
             print(str(e), file=console.stderr)
             console.endexecuting()
