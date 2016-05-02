@@ -5,6 +5,8 @@
 #     end-of-line conventions, instead of relying on the standard library,
 #     which will only understand the local convention.
 
+from idlesporklib.compat import *
+
 import codecs
 from codecs import BOM_UTF8
 import os
@@ -139,7 +141,7 @@ def coding_spec(str):
         codecs.lookup(name)
     except LookupError:
         # The standard encoding error does not indicate the encoding
-        raise LookupError, "Unknown encoding "+name
+        raise LookupError("Unknown encoding "+name)
     return name
 
 
@@ -260,7 +262,7 @@ class IOBinding:
         firsteol = self.eol_re.search(chars)
         if firsteol:
             self.eol_convention = firsteol.group(0)
-            if isinstance(self.eol_convention, unicode):
+            if unicode != str and isinstance(self.eol_convention, unicode):
                 # Make sure it is an ASCII string
                 self.eol_convention = self.eol_convention.encode("ascii")
             chars = self.eol_re.sub(r"\n", chars)

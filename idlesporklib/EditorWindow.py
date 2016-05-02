@@ -1,3 +1,5 @@
+from idlesporklib.compat import *
+
 import sys
 import os
 import platform
@@ -52,7 +54,7 @@ def _find_module(fullname, path=None):
         try:
             path = module.__path__
         except AttributeError:
-            raise ImportError, 'No source for module ' + module.__name__
+            raise ImportError('No source for module ' + module.__name__)
     if descr[2] != imp.PY_SOURCE:
         # If all of the above fails and didn't raise an exception,fallback
         # to a straight import which can find __init__.py in a package.
@@ -921,17 +923,17 @@ class EditorWindow(object):
         return open_recent_file
 
     def saved_change_hook(self):
-        short = self.short_title()
-        long = self.long_title()
-        if short and long:
-            title = short + " - " + long + _py_version
-        elif short:
-            title = short
-        elif long:
-            title = long
+        short_title = self.short_title()
+        long_title = self.long_title()
+        if short_title and long_title:
+            title = short_title + " - " + long_title + _py_version
+        elif short_title:
+            title = short_title
+        elif long_title:
+            title = long_title
         else:
             title = "Untitled"
-        icon = short or long or title
+        icon = short_title or long_title or title
         if not self.get_saved():
             title = "*%s*" % title
             icon = "*%s" % icon
@@ -989,8 +991,7 @@ class EditorWindow(object):
         "Return (width, height, x, y)"
         geom = self.top.wm_geometry()
         m = re.match(r"(\d+)x(\d+)\+(-?\d+)\+(-?\d+)", geom)
-        tuple = (map(int, m.groups()))
-        return tuple
+        return tuple(map(int, m.groups()))
 
     def close_event(self, event):
         self.close()
@@ -1045,7 +1046,7 @@ class EditorWindow(object):
             try:
                 self.load_extension(name)
             except:
-                print "Failed to load extension", repr(name)
+                print("Failed to load extension", repr(name))
                 import traceback
                 traceback.print_exc()
 
@@ -1056,7 +1057,7 @@ class EditorWindow(object):
         try:
             mod = __import__(name, globals(), locals(), [])
         except ImportError:
-            print "\nFailed to import extension: ", name
+            print("\nFailed to import extension: ", name)
             return
         cls = getattr(mod, name)
         keydefs = idleConf.GetExtensionBindings(name)
@@ -1128,14 +1129,14 @@ class EditorWindow(object):
             value = var.get()
             return value
         else:
-            raise NameError, name
+            raise NameError(name)
 
     def setvar(self, name, value, vartype=None):
         var = self.get_var_obj(name, vartype)
         if var:
             var.set(value)
         else:
-            raise NameError, name
+            raise NameError(name)
 
     def get_var_obj(self, name, vartype=None):
         var = self.tkinter_vars.get(name)

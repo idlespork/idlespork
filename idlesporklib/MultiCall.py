@@ -29,6 +29,8 @@ The order by which events are called is defined by these rules:
 Each function will be called at most once for each event.
 """
 
+from idlesporklib.compat import *
+
 import sys
 import string
 import re
@@ -105,7 +107,7 @@ class _SimpleBinder:
 # _state_subsets gives for each combination of modifiers, or *state*,
 # a list of the states which are a subset of it. This list is ordered by the
 # number of modifiers is the state - the most specific state comes first.
-_states = range(1 << len(_modifiers))
+_states = list(range(1 << len(_modifiers)))
 _state_names = [''.join(m[0]+'-'
                         for i, m in enumerate(_modifiers)
                         if (1 << i) & s)
@@ -407,7 +409,7 @@ def _multi_call(parent):
     text.pack()
     def bindseq(seq, n=[0]):
         def handler(event):
-            print seq
+            print(seq)
         text.bind("<<handler%d>>"%n[0], handler)
         text.event_add("<<handler%d>>"%n[0], seq)
         n[0] += 1

@@ -1,3 +1,4 @@
+from idlesporklib.compat import *
 from Tkinter import Toplevel, TclError
 import sys
 
@@ -46,8 +47,8 @@ class WindowList:
             try:
                 callback()
             except:
-                print "warning: callback failed in WindowList", \
-                      sys.exc_type, ":", sys.exc_value
+                print("warning: callback failed in WindowList", \
+                      sys.exc_info()[0], ":", sys.exc_info()[1])
 
 registry = WindowList()
 
