@@ -1,13 +1,12 @@
 from __future__ import print_function
 
-import exceptions
 import re
-import sporktools
+import idlesporklib.sporktools as sporktools
 import sys
 import imp
 import traceback
-import PyParse
-from HyperParser import HyperParser
+import idlesporklib.PyParse as PyParse
+from idlesporklib.HyperParser import HyperParser
 
 __main__ = sys.modules['__main__']
 __builtin__ = sys.modules['__builtin__']
@@ -17,13 +16,13 @@ def exception_suggest(typ, val, tb, source, filename):
     global softnewline
     softnewline = True
     last_trace = traceback.extract_tb(tb)[-1]
-    if typ == exceptions.NameError:
+    if typ == NameError:
         m = re.match("^(?:global )?name '(.*)' is not defined$", str(val))
         if m:
             undefname = m.group(1)
             _import_suggest(undefname, source)
             _spelling_suggest(undefname, source, last_trace, filename)
-    if typ == exceptions.AttributeError:
+    if typ == AttributeError:
         m = re.search("object has no attribute '(.*)'$", str(val))
         if m:
             undefname = m.group(1)

@@ -21,7 +21,6 @@ barrier, in particular frame and traceback objects.
 """
 
 import types
-from idlesporklib import Debugger
 
 debugging = 0
 
@@ -161,7 +160,7 @@ class IdbAdapter:
 
     def dict_keys(self, did):
         dict = dicttable[did]
-        return dict.keys()
+        return list(dict.keys())
 
     def dict_item(self, did, key):
         dict = dicttable[did]
@@ -182,6 +181,7 @@ def start_debugger(rpchandler, gui_adap_oid):
     IdbProxy.
 
     """
+    from idlesporklib import Debugger
     gui_proxy = GUIProxy(rpchandler, gui_adap_oid)
     idb = Debugger.Idb(gui_proxy)
     idb_adap = IdbAdapter(idb)
@@ -204,7 +204,7 @@ class FrameProxy:
 
     def __getattr__(self, name):
         if name[:1] == "_":
-            raise AttributeError, name
+            raise AttributeError(name)
         if name == "f_code":
             return self._get_f_code()
         if name == "f_globals":
@@ -268,7 +268,7 @@ class DictProxy:
 
     def __getattr__(self, name):
         ##print >>sys.__stderr__, "failed DictProxy.__getattr__:", name
-        raise AttributeError, name
+        raise AttributeError(name)
 
 
 class GUIAdapter:
@@ -349,6 +349,7 @@ def start_remote_debugger(rpcclt, pyshell):
 
     """
     global idb_adap_oid
+    from idlesporklib import Debugger
 
     idb_adap_oid = rpcclt.remotecall("exec", "start_the_debugger",\
                                    (gui_adap_oid,), {})

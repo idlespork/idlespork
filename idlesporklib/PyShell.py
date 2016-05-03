@@ -48,8 +48,7 @@ from idlesporklib import Debugger
 from idlesporklib import RemoteDebugger
 from idlesporklib import macosxSupport
 from idlesporklib import IOBinding
-
-import HistWin
+from idlesporklib import HistWin
 
 IDENTCHARS = string.ascii_letters + string.digits + "_"
 HOST = '127.0.0.1' # python execution server on localhost loopback

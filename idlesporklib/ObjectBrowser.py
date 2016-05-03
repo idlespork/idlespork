@@ -9,6 +9,8 @@
 # XXX TO DO:
 # - for classes/modules, add "open source" to object browser
 
+from idlesporklib.compat import *
+
 import re
 
 from idlesporklib.TreeWidget import TreeItem, TreeNode, ScrolledCanvas
@@ -112,19 +114,20 @@ class DictTreeItem(SequenceTreeItem):
             pass
         return keys
 
-from types import IntType, LongType, FloatType, StringType, TupleType, ListType, DictType, InstanceType, ClassType
-
 dispatch = {
-    IntType: AtomicObjectTreeItem,
-    LongType: AtomicObjectTreeItem,
-    FloatType: AtomicObjectTreeItem,
-    StringType: AtomicObjectTreeItem,
-    TupleType: SequenceTreeItem,
-    ListType: SequenceTreeItem,
-    DictType: DictTreeItem,
-    InstanceType: InstanceTreeItem,
-    ClassType: ClassTreeItem,
+    int: AtomicObjectTreeItem,
+    long: AtomicObjectTreeItem,
+    float: AtomicObjectTreeItem,
+    str: AtomicObjectTreeItem,
+    tuple: SequenceTreeItem,
+    list: SequenceTreeItem,
+    dict: DictTreeItem,
+    type: ClassTreeItem,
 }
+
+import types
+if hasattr(types, 'InstanceType'):
+    dispatch[types.InstanceType] = InstanceTreeItem
 
 def make_objecttreeitem(labeltext, object, setfunction=None):
     t = type(object)

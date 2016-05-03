@@ -7,7 +7,6 @@ import os
 import sys
 import string
 import keyword
-import PyShell
 
 from idlesporklib.configHandler import idleConf
 
@@ -62,6 +61,7 @@ class AutoComplete:
             self.autocompletewindow = None
 
     def is_executing(self):
+        import PyShell
         return isinstance(self.editwin, PyShell.PyShell) and \
             self.editwin.executing
 

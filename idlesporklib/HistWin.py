@@ -1,4 +1,4 @@
-from configHandler import idleConf
+from idlesporklib.configHandler import idleConf
 from Tkinter import Frame, Listbox, Scrollbar
 from Tkinter import TOP, X, Y, END, RIGHT, EXTENDED
 

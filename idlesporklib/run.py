@@ -1,7 +1,11 @@
+from __future__ import print_function
+
+from idlesporklib.compat import *
+
 import sys
 import os
 import linecache
-import PatchLineCache # This patches linecache!!
+from idlesporklib import PatchLineCache as PatchLineCache # This patches linecache!!
 PatchLineCache.patch_linecache()
 import time
 import socket
@@ -9,7 +13,7 @@ import traceback
 import thread
 import threading
 import Queue
-import cStringIO
+import io
 try:
     import ctypes
 except ImportError:
@@ -84,7 +88,7 @@ class Jobs(object):
         self.__death_hook = {}
 
     def get_ind(self):
-        K = self.__jobs.keys()
+        K = list(self.__jobs.keys())
         if len(K) == 0: return 0
         return min(set(range(max(K)+2)) - set(K))
 
@@ -99,7 +103,7 @@ class Jobs(object):
             else:
                 return None
         self.__jobs[jnum] = jthread
-        if not self.__death_hook.has_key(jnum):
+        if jnum not in self.__death_hook:
             self.__death_hook[jnum] = []
         return jnum
 
@@ -146,9 +150,9 @@ class Jobs(object):
             if self.__jobs[num].isAlive():
                 self.__death_hook[num].append((f,args,kwargs))
             else:
-                print >>sys.stderr, 'Cannot queue after nonliving job.'
+                print('Cannot queue after nonliving job.', file=sys.stderr)
         except KeyError:
-            print >>sys.stderr, 'Job %d does not exist'%num
+            print('Job %d does not exist'%num, file=sys.stderr)
 
     def save_id(self,descr):
         ind = self.get_ind()
@@ -157,7 +161,7 @@ class Jobs(object):
         return ind
 
     def has_job(self,jnum):
-        return self.__jobs.has_key(jnum)
+        return jnum in self.__jobs
 
     def is_alive(self,jnum):
         return self.__jobs[jnum].isAlive()
@@ -203,7 +207,7 @@ the function.
 
         try:
             self.ret = self.func(*self.args, **self.kw)
-        except Exception, e:
+        except Exception as e:
             self.exc = e
         finally:
             self.returnEvent.set()
@@ -308,7 +312,7 @@ def main(del_exitfunc=False):
         assert(len(sys.argv) > 1)
         port = int(sys.argv[-1])
     except:
-        print>>sys.stderr, "IDLE Subprocess: no IP port passed in sys.argv."
+        print("IDLE Subprocess: no IP port passed in sys.argv.", file=sys.stderr)
         return
 
     capture_warnings(True)
@@ -343,7 +347,7 @@ class RunThread(threading.Thread):
         self.__keepalive=True
         self.ctrlC = False
         self.description = 'No description'
-        self.output = cStringIO.StringIO()
+        self.output = io.StringIO()
         self.trueoutput = False
         self.ret = None
         self.start_time = self.end_time = None
@@ -376,7 +380,7 @@ class RunThread(threading.Thread):
         else:
             self.ret = val
             if val is not None:
-                print val
+                print(val)
 
     def run(self):
         global exit_now
@@ -477,11 +481,11 @@ def manage_socket(address):
             server = MyRPCServer(address, MyHandler)
             break
         except socket.error as err:
-            print>>sys.__stderr__,"IDLE Subprocess: socket error: "\
-                                        + err.args[1] + ", retrying...."
+            print("IDLE Subprocess: socket error: "\
+                                        + err.args[1] + ", retrying....", file=sys.__stderr__)
     else:
-        print>>sys.__stderr__, "IDLE Subprocess: Connection to "\
-                               "IDLE GUI failed, exiting."
+        print("IDLE Subprocess: Connection to "\
+                               "IDLE GUI failed, exiting.", file=sys.__stderr__)
         show_socket_error(err, address)
         global exit_now
         exit_now = True
@@ -512,7 +516,7 @@ def print_exception(source = None, filename = None):
     typ, val, tb = excinfo = sys.exc_info()
     sys.last_type, sys.last_value, sys.last_traceback = excinfo
     tbe = traceback.extract_tb(tb)
-    print>>efile, '\nTraceback (most recent call last):'
+    print('\nTraceback (most recent call last):', file=efile)
     exclude = ("run.py", "rpc.py", "threading.py", "Queue.py",
                "RemoteDebugger.py", "bdb.py", "Commands.py")
     cleanup_traceback(tbe, exclude)
@@ -520,7 +524,7 @@ def print_exception(source = None, filename = None):
     traceback.print_list(tbe, file=efile)
     lines = traceback.format_exception_only(typ, val)
     for line in lines:
-        print>>efile, line,
+        print(line, end=' ', file=efile)
     if source is not None and filename is not None:
        Suggest.exception_suggest(typ, val, tb, source, filename)
 
@@ -558,7 +562,7 @@ def cleanup_traceback(tb, exclude):
     if len(tb) == 0:
         # exception was in IDLE internals, don't prune!
         tb[:] = orig_tb[:]
-        print>>sys.stderr, "** IDLE Internal Exception: "
+        print("** IDLE Internal Exception: ", file=sys.stderr)
     rpchandler = rpc.objecttable['exec'].rpchandler
     for i in range(len(tb)):
         fn, ln, nm, line = tb[i]
@@ -613,14 +617,14 @@ class MyRPCServer(rpc.RPCServer):
             thread.interrupt_main()
         except:
             erf = sys.__stderr__
-            print>>erf, '\n' + '-'*40
-            print>>erf, 'Unhandled server exception!'
-            print>>erf, 'Thread: %s' % threading.currentThread().getName()
-            print>>erf, 'Client Address: ', client_address
-            print>>erf, 'Request: ', repr(request)
+            print('\n' + '-'*40, file=erf)
+            print('Unhandled server exception!', file=erf)
+            print('Thread: %s' % threading.currentThread().getName(), file=erf)
+            print('Client Address: ', client_address, file=erf)
+            print('Request: ', repr(request), file=erf)
             traceback.print_exc(file=erf)
-            print>>erf, '\n*** Unrecoverable, server exiting!'
-            print>>erf, '-'*40
+            print('\n*** Unrecoverable, server exiting!', file=erf)
+            print('-'*40, file=erf)
             quitting = True
             thread.interrupt_main()
 
@@ -687,7 +691,7 @@ class Executive(object):
             self.usr_exc_info = None
             interruptable = True
             try:
-                exec code in self.locals
+                exec(code, self.locals)
             finally:
                 interruptable = False
         except SystemExit:
@@ -718,10 +722,10 @@ class Executive(object):
 
     def runcode_after(self, code, source, jobid):
         if not World.jobs.has_job(jobid):
-            print >>sys.stderr, 'Job %d does not exist'%jobid
+            print('Job %d does not exist'%jobid, file=sys.stderr)
             return
         if not World.jobs.is_alive(jobid):
-            print >>sys.stderr, 'Cannot queue after nonliving job.'
+            print('Cannot queue after nonliving job.', file=sys.stderr)
             return
         jnum = World.jobs.save_id('Queued after [%d]'%jobid)
         World.jobs.subscribe_to_death(jobid, self.runcode_bg, code, source, jnum)
@@ -761,7 +765,7 @@ class Executive(object):
         try:
             return str(getattr(sys, 'ps1', '>>> '))
         except:
-            print >>sys.stderr, "** Exception in str(sys.ps1):"
+            print("** Exception in str(sys.ps1):", file=sys.stderr)
             print_exception()
             return '>>> '
 

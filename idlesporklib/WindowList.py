@@ -1,4 +1,6 @@
+from __future__ import print_function
 from idlesporklib.compat import *
+
 from Tkinter import Toplevel, TclError
 import sys
 
