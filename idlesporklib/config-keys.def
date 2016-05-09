@@ -21,7 +21,7 @@ python-docs=<Key-F1>
 python-context-help=<Shift-Key-F1>
 history-next=<Alt-Key-n> <Meta-Key-n> <Alt-Key-N> <Meta-Key-N>
 history-previous=<Alt-Key-p> <Meta-Key-p> <Alt-Key-P> <Meta-Key-P>
-history-window-toggle=<Control-h><Control-t>
+history-window-toggle=<Control-Shift-Key-H>
 interrupt-execution=<Control-Key-c> <Control-Key-C>
 view-restart=<Key-F6>
 restart-shell=<Control-Key-F6>
@@ -43,7 +43,7 @@ find=<Control-Key-f> <Control-Key-F>
 find-again=<Control-Key-g> <Key-F3> <Control-Key-G>
 find-in-files=<Alt-Key-F3> <Meta-Key-F3>
 find-selection=<Control-Key-F3>
-replace=<Control-Key-H>
+replace=<Control-Key-h>
 goto-line=<Alt-Key-g> <Meta-Key-g> <Alt-Key-G> <Meta-Key-G>
 smart-backspace=<Key-BackSpace>
 newline-and-indent=<Key-Return> <Key-KP_Enter>
@@ -113,7 +113,7 @@ del-word-left=<Alt-Key-BackSpace>
 del-word-right=<Alt-Key-d>
 link-previous=<Control-Key-r>
 link-next=<Alt-Key-r>
-history-window-toggle=<Control-h><Control-t>
+history-window-toggle=<Control-Shift-Key-H>
 
 [IDLE Classic Mac]
 copy=<Command-Key-c>
@@ -167,7 +167,7 @@ del-word-left=<Control-Key-BackSpace>
 del-word-right=<Control-Key-Delete>
 link-previous=<Control-Key-r>
 link-next=<Alt-Key-r>
-history-window-toggle=<Control-h><Control-t>
+history-window-toggle=<Control-Shift-Key-H>
 
 [IDLE Classic OSX]
 toggle-tabs = <Control-Key-t>
@@ -222,7 +222,7 @@ open-window-from-file = <Command-Key-o>
 python-docs = <Key-F1>
 link-previous=<Control-Key-r>
 link-next=<Alt-Key-r>
-history-window-toggle=<Control-h><Control-t>
+history-window-toggle=<Control-Shift-Key-H>
 
 [IDLE Skywalker]
 copy=<Control-Key-c> <Control-Key-C>
@@ -259,7 +259,7 @@ find=<Control-Key-f> <Control-Key-F>
 find-again=<Control-Key-g> <Key-F3>
 find-in-files=<Alt-Key-F3> <Meta-Key-F3>
 find-selection=<Control-Key-F3>
-replace=<Control-Key-h> <Control-Key-H>
+replace=<Control-Key-h>
 goto-line=<Alt-Key-g> <Meta-Key-g>
 smart-backspace=<Key-BackSpace>
 newline-and-indent=<Key-Return> <Key-KP_Enter>
@@ -276,5 +276,5 @@ del-word-left=<Control-Key-BackSpace>
 del-word-right=<Control-Key-Delete>
 link-previous=<Control-Key-r>
 link-next=<Alt-Key-r>
-history-window-toggle=<Control-h><Control-t>
+history-window-toggle=<Control-Shift-Key-H>
 

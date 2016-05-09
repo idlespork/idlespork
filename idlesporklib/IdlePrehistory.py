@@ -15,7 +15,7 @@ def concat_lists(lists):
 
 class Prehistory(object):
     def __init__(self, path):
-        self.PATH = path + '/.idleprehistory.pickle'
+        self.PATH = path + '/.idlesporkhistory.pickle'
         self.history = {}
         self.sessid = 0
         self.noprehist = False
