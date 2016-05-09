@@ -536,16 +536,8 @@ class ConfigDialog(Toplevel):
 
     def VarChanged_builtinTheme(self, *params):
         value = self.builtinTheme.get()
-        if value == 'IDLE Dark':
-            if idleConf.GetOption('main', 'Theme', 'name') != 'IDLE New':
-                self.AddChangedItem('main', 'Theme', 'name', 'IDLE Classic')
-            self.AddChangedItem('main', 'Theme', 'name2', value)
-            self.new_custom_theme.config(text='New theme, see Help',
-                                         fg='#500000')
-        else:
-            self.AddChangedItem('main', 'Theme', 'name', value)
-            self.AddChangedItem('main', 'Theme', 'name2', '')
-            self.new_custom_theme.config(text='', fg='black')
+        self.AddChangedItem('main', 'Theme', 'name', value)
+        self.new_custom_theme.config(text='', fg='black')
         self.PaintThemeSample()
 
     def VarChanged_customTheme(self, *params):

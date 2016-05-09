@@ -64,13 +64,11 @@ num-spaces= 4
 
 [Theme]
 default= 1
-name= IDLE Classic
-name2=
-# name2 set in user config-main.cfg for themes added after 2015 Oct 1
+name= IDLE Vader
 
 [Keys]
 default= 1
-name= IDLE Classic Windows
+name= IDLE Skywalker
 
 [History]
 cyclic=0
