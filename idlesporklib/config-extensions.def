@@ -23,7 +23,7 @@
 #
 # Currently it is necessary to manually modify this file to change
 # extension key bindings and default values. To customize, create
-# ~/.idlerc/config-extensions.cfg and append the appropriate customized
+# ~/.idlesporkrc/config-extensions.cfg and append the appropriate customized
 # section(s).  Those sections will override the defaults in this file.
 #
 # Note: If a keybinding is already in use when the extension is loaded,

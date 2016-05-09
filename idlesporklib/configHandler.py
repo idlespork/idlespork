@@ -152,7 +152,7 @@ class IdleConf:
 
     User config files, self.userCfg --
         for config_type in self.config_types:
-        (user home dir)/.idlerc/config-{config-type}.cfg
+        (user home dir)/.idlesporkrc/config-{config-type}.cfg
     """
     def __init__(self):
         self.config_types = ('main', 'extensions', 'highlight', 'keys')
@@ -189,7 +189,7 @@ class IdleConf:
 
         Creates it if required.
         """
-        cfgDir = '.idlerc'
+        cfgDir = '.idlesporkrc'
         #userDir = os.path.expanduser('~')
         userDir = os.environ.get('SPORKPATH', os.path.expanduser('~'))
         if userDir != '~': # expanduser() found user home dir

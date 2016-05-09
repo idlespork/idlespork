@@ -1378,20 +1378,12 @@ class ConfigDialog(Toplevel):
 help_common = '''\
 When you click either the Apply or Ok buttons, settings in this
 dialog that are different from IDLE's default are saved in
-a .idlerc directory in your home directory. Except as noted,
+a .idlesporkrc directory in your home directory. Except as noted,
 these changes apply to all versions of IDLE installed on this
 machine. Some do not take affect until IDLE is restarted.
 [Cancel] only cancels changes made since the last save.
 '''
-help_pages = {
-    'Highlighting':'''
-Highlighting:
-The IDLE Dark color theme is new in October 2015.  It can only
-be used with older IDLE releases if it is saved as a custom
-theme, with a different name.
-'''
-}
-
+help_pages = { }
 
 def is_int(s):
     "Return 's is blank or represents an int'"

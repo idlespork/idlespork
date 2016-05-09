@@ -13,15 +13,15 @@
 #
 #     user configuration
 #     -------------------
-#     ~/.idlerc/config-main.cfg            the user general config file
-#     ~/.idlerc/config-extensions.cfg      the user extension config file
-#     ~/.idlerc/config-highlight.cfg       the user highlighting config file
-#     ~/.idlerc/config-keys.cfg            the user keybinding config file
+#     ~/.idlesporkrc/config-main.cfg            the user general config file
+#     ~/.idlesporkrc/config-extensions.cfg      the user extension config file
+#     ~/.idlesporkrc/config-highlight.cfg       the user highlighting config file
+#     ~/.idlesporkrc/config-keys.cfg            the user keybinding config file
 #
-# On Windows2000 and Windows XP the .idlerc directory is at
-#     Documents and Settings\<username>\.idlerc
+# On Windows2000 and Windows XP the .idlesporkrc directory is at
+#     Documents and Settings\<username>\.idlesporkrc
 #
-# On Windows98 it is at c:\.idlerc
+# On Windows98 it is at c:\.idlesporkrc
 #
 # Any options the user saves through the config dialog will be saved to
 # the relevant user config file. Reverting any general setting to the
