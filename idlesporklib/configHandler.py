@@ -720,7 +720,6 @@ class IdleConf:
                 f = Font(name='TkFixedFont', exists=True, root=root)
                 actualFont = Font.actual(f)
                 family = actualFont['family']
-                size = actualFont['size']
                 if size < 0:
                     size = 10  # if font in pixels, ignore actual size
                 bold = actualFont['weight']=='bold'
