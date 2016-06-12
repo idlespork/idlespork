@@ -1,3 +1,6 @@
+# This file was originally copied for Tal Einat's Squeezer package.
+# It was slightly modified by the idlespork team
+
 """
 Squeezer - using this extension will make long texts become a small button.
 """
@@ -78,14 +81,8 @@ class ExpandingButton(Tkinter.Button):
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
         
-        caption = "Squeezed text (about %d lines). "\
-                  "Double-click to expand, middle-click to copy" % numoflines
-        if squeezer._PREVIEW_COMMAND:
-            caption += ", right-click to preview."
-        else:
-            caption += "."
         Tkinter.Button.__init__(self, text,
-                                text=caption,
+                                text=self.get_caption(numoflines),
                                 background="#FFFFC0",
                                 activebackground="#FFFFE0")
         self.bind("<Double-Button-1>", self.expand)
@@ -93,14 +90,36 @@ class ExpandingButton(Tkinter.Button):
         if squeezer._PREVIEW_COMMAND:
             self.bind("<Button-3>", self.preview)
         self.selection_handle(lambda offset,length: s[int(offset):int(offset)+int(length)])
+
+    def get_caption(self, numoflines=None):
+        if numoflines is None:
+            numoflines = self.squeezer.count_lines(self.s)
+
+        caption = "Squeezed text (about %d lines). "\
+                  "Double-click to expand, middle-click to copy" % numoflines
+        if self.squeezer._PREVIEW_COMMAND:
+            caption += ", right-click to preview."
+        else:
+            caption += "."
+        return caption
+
+    def update_btn(self):
+        self['text'] = self.get_caption()
         
     def expand(self, event):
         # We must use the original insert and delete methods of the Text widget,
         # to be able to change text before the iomark.
+        expanded_txt = self.s[:Squeezer._MAX_EXPAND]
+        rem_txt = self.s[Squeezer._MAX_EXPAND:]
+
         basetext = _get_base_text(self.editwin)
-        basetext.insert(self.text.index(self), self.s, self.tags)
-        basetext.delete(self)
-        self.squeezer.expandingbuttons.remove(self)
+        basetext.insert(self.text.index(self), expanded_txt, self.tags)
+        if len(rem_txt) == 0:
+            basetext.delete(self)
+            self.squeezer.expandingbuttons.remove(self)
+        else:
+            self.s = rem_txt
+            self.update_btn()
         
     def copy(self, event):
         self.clipboard_clear()
@@ -115,12 +134,18 @@ class ExpandingButton(Tkinter.Button):
         f.close()
         os.system(self.squeezer._PREVIEW_COMMAND % {"fn":fn})
             
+    def expand_back(self, s):
+        self.s = s + self.s
+        self.update_btn()
 
 class Squeezer:
 
     _MAX_NUM_OF_LINES = idleConf.GetOption("extensions", "Squeezer",
                                            "max-num-of-lines", type="int",
                                            default=30)
+
+    _MAX_EXPAND = idleConf.GetOption(
+        "extensions", "Squeezer", "max-expand", type="int", default=50000)
 
     _PREVIEW_COMMAND = idleConf.GetOption(
         "extensions", "Squeezer",
@@ -248,6 +273,7 @@ class Squeezer:
         if not rng or rng[0]==rng[1]:
             return False
         start, end = rng
+        old_expandingbutton = self.find_button(end)
         
         s = self.text.get(start, end)
         # if the last char is a newline, remove it from the range
@@ -256,6 +282,12 @@ class Squeezer:
             s = s[:-1]
         # delete the text
         _get_base_text(self.editwin).delete(start, end)
+
+        if old_expandingbutton is not None and \
+           old_expandingbutton.tags == tag_name:
+            old_expandingbutton.expand_back(s)
+            return True
+
         # prepare an ExpandingButton
         numoflines = self.count_lines(s)
         expandingbutton = ExpandingButton(s, tag_name, numoflines, self)
@@ -269,3 +301,9 @@ class Squeezer:
             i -= 1
         self.expandingbuttons.insert(i, expandingbutton)
         return True
+
+    def find_button(self, pos):
+        for btn in self.expandingbuttons:
+            if self.text.compare(pos, "==", btn):
+                return btn
+        return None
