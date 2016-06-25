@@ -14,13 +14,6 @@
 
 from __future__ import print_function
 
-config_extension_def = """
-[MultiLineRun]
-enable=1
-enable_editor=0
-enable_shell=1
-"""
-
 from idlesporklib.configHandler import idleConf
 from idlesporklib.Delegator import Delegator
 import time
