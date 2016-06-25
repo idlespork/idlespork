@@ -37,18 +37,16 @@ class MultiLineDelegator(Delegator):
         self.paste = False
 
     def insert(self, index, chars, tags=None):
-        do_insert = True
         if self.paste:
             self.paste = False
             try:
-                do_insert = self.callback(chars)
+                chars = self.callback(chars)
             except Exception as err:
                 # Must catch exception else IDLE closes
                 print(' MultiLineRun Internal Error', file=sys.stderr)
                 traceback.print_exc()
 
-        if do_insert:
-            self.delegate.insert(index, chars, tags)
+        self.delegate.insert(index, chars, tags)
 
     def delete(self, index1, index2=None):
         self.delegate.delete(index1, index2)
@@ -76,19 +74,16 @@ class MultiLineRun(object):
         self.mld.paste = True
 
     def paste_intercept(self, chars):
-        self.mld.paste = False
         if self.editwin.executing:
-            return True
+            # Do nothing
+            return chars
 
-        self.play(chars)
-
-    def play(self, chars):
         chars = self.eol_re.sub(r"\n", chars)
 
         lines = chars.splitlines()
         lines = self.dedent(lines)
 
-        self.text.insert("insert", "\n".join(lines))
+        return "\n".join(lines)
 
     def dedent(self, lines):
         """
