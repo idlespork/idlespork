@@ -102,6 +102,11 @@ zoom-height=<Alt-Key-2>
 [BetterOutput]
 enable=1
 
+[MultiLineRun]
+enable=1
+enable_editor=0
+enable_shell=1
+
 [Squeezer]
 enable=1
 max-num-of-lines=30
