@@ -232,7 +232,7 @@ def get_arg_text(ob):
     # Try to build one for Python defined functions
     if type(fob) in [types.FunctionType, types.LambdaType]:
         argcount = fob.func_code.co_argcount
-        real_args = fob.func_code.co_varnames[arg_offset:argcount]
+        real_args = list(fob.func_code.co_varnames[arg_offset:argcount])
         defaults = fob.func_defaults or []
         defaults = list(map(lambda name: "=%s" % repr(name), defaults))
         defaults = [""] * (len(real_args) - len(defaults)) + defaults
