@@ -81,6 +81,17 @@ class CallTips:
         self.calltip = self._make_calltip_window()
         self.calltip.showtip(arg_text, sur_paren[0], sur_paren[1])
 
+    def arg_names(self, evalfuncs):
+        hp = HyperParser(self.editwin, "insert")
+        sur_paren = hp.get_surrounding_brackets('(')
+        if not sur_paren:
+            return
+        hp.set_index(sur_paren[0])
+        expression = hp.get_expression()
+        if not expression or (not evalfuncs and expression.find('(') != -1):
+            return
+        return self.fetch_tip(('args', expression))
+
     def fetch_tip(self, expression):
         """Return the argument list and docstring of a function or class
 
@@ -103,6 +114,10 @@ class CallTips:
             return rpcclt.remotecall("exec", "get_the_calltip",
                                      (expression,), {})
         else:
+            if isinstance(expression, tuple) and expression[0] == 'args':
+                entity = self.get_entity(expression[1])
+                return get_arg_names(entity)
+
             entity = self.get_entity(expression)
             return get_arg_text(entity)
 
@@ -136,7 +151,20 @@ _MAX_COLS = 85
 _MAX_LINES = 5  # enough for bytes
 _INDENT = ' '*4  # for wrapped signatures
 
-def get_arg_text(ob):
+def delist(a):
+    '''Return a nice representation of nested tuples'''
+    items = []
+    for x in a:
+        if isinstance(x, str):
+            items.append(x)
+        else:
+            items.append(delist(x))
+    if len(items) > 1:
+        return '({})'.format(', '.join(items))
+    else:
+        return '({},)'.format(items[0])
+
+def get_fob(ob):
     '''Return a string describing the signature of a callable object, or ''.
 
     For Python-coded functions and methods, the first line is introspected.
@@ -152,7 +180,7 @@ def get_arg_text(ob):
         if type(ob) is types.ClassType:  # old-style
             ob_call = ob
         else:
-            return argspec
+            return None, None, argspec, None
 
     arg_offset = 0
     if type(ob) in (types.ClassType, types.TypeType):
@@ -175,6 +203,32 @@ def get_arg_text(ob):
         arg_offset = 1
     else:
         fob = ob
+
+    return fob, arg_offset, argspec, ob_call
+
+def get_arg_names(ob):
+    fob, arg_offset, _, _ = get_fob(ob)
+    try:
+        argcount = fob.func_code.co_argcount
+        ret = list(fob.func_code.co_varnames[arg_offset:argcount])
+        return ret
+    except:
+        return
+
+def get_arg_text(ob):
+    '''Return a string describing the signature of a callable object, or ''.
+
+    For Python-coded functions and methods, the first line is introspected.
+    Delete 'self' parameter for classes (.__init__) and bound methods.
+    The next lines are the first lines of the doc string up to the first
+    empty line or _MAX_LINES.    For builtins, this typically includes
+    the arguments in addition to the return value.
+    '''
+    fob, arg_offset, argspec, ob_call = get_fob(ob)
+
+    if fob is None:
+        return argspec
+
     # Try to build one for Python defined functions
     if type(fob) in [types.FunctionType, types.LambdaType]:
         argcount = fob.func_code.co_argcount
@@ -182,17 +236,24 @@ def get_arg_text(ob):
         defaults = fob.func_defaults or []
         defaults = list(map(lambda name: "=%s" % repr(name), defaults))
         defaults = [""] * (len(real_args) - len(defaults)) + defaults
+
+        try:
+            import inspect
+            argspec = inspect.getargspec(fob)
+            for i, arg in enumerate(real_args, arg_offset):
+                if re.match("(?<!\d)\.\d+", arg) is not None:
+                    real_args[i] = delist(argspec.args[i])
+        except:
+            pass
+
         items = map(lambda arg, dflt: arg + dflt, real_args, defaults)
-        for flag, pre, name in ((0x4, '*', 'args'), (0x8, '**', 'kwargs')):
+
+        arg_offset = argcount
+        for flag, pre in ((0x4, '*'), (0x8, '**')):
             if fob.func_code.co_flags & flag:
-                pre_name = pre + name
-                if name not in real_args:
-                    items.append(pre_name)
-                else:
-                    i = 1
-                    while ((name+'%s') % i) in real_args:
-                        i += 1
-                    items.append((pre_name+'%s') % i)
+                items.append(pre + fob.func_code.co_varnames[arg_offset])
+                arg_offset += 1
+
         argspec = ", ".join(items)
         argspec = "(%s)" % re.sub("(?<!\d)\.\d+", "<tuple>", argspec)
 
@@ -211,7 +272,7 @@ def get_arg_text(ob):
             if len(line) > _MAX_COLS:
                 line = line[: _MAX_COLS - 3] + '...'
             lines.append(line)
-        argspec = '\n'.join(lines)
+    argspec = '\n'.join(lines)
     return argspec
 
 if __name__ == '__main__':
