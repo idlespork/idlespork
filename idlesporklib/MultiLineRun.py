@@ -63,6 +63,9 @@ class MultiLineRun(object):
         if wsys == 'x11':
             self.text.bind('<Button-2>', self.paste, '+')  # For X11 middle click
 
+        self.editwin.rmenu_specs.append(("Run lines", "<<run-lines>>", 'rmenu_check_copy'))
+        self.text.bind("<<run-lines>>", self.run_lines)
+
     def paste(self, event=None):
         self.mld.paste = True
 
@@ -108,3 +111,21 @@ class MultiLineRun(object):
             indentation.append(indent_char)
             idx += 1
         return "".join(indentation)
+
+    def run_lines(self, event=None):
+        start, end = self.text.tag_ranges("sel")
+        start = '{}.0'.format(start.string.split('.')[0])
+        end = '{}.end'.format(end.string.split('.')[0])
+        code = self.text.get(start, end)  # type: str
+
+        code = [line[4:] if line.startswith('>>> ') else line for line in code.splitlines()]
+        code = [line for line in code if line.strip()]
+
+        if len(code) == 0:
+            return
+
+        code = '\n'.join(self.dedent(code))
+        self.text.insert('end', code)
+        self.text.tag_remove('sel', "1.0", 'end')
+        self.editwin.interp.runcmd_from_source(code)
+        self.text.see('end')
