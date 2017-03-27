@@ -211,6 +211,7 @@ def get_arg_names(ob):
     try:
         argcount = fob.func_code.co_argcount
         ret = list(fob.func_code.co_varnames[arg_offset:argcount])
+        ret = [arg for arg in ret if re.match("(?<!\d)\.\d+", arg) is None]
         return ret
     except:
         return
