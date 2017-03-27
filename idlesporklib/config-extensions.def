@@ -54,6 +54,9 @@ force-open-calltip=<Control-Key-backslash>
 try-open-calltip=<KeyRelease-parenleft>
 refresh-calltip=<KeyRelease-parenright> <KeyRelease-0>
 
+[ResourcesStatus]
+enable=True
+
 [CodeContext]
 enable=True
 enable_shell=False
