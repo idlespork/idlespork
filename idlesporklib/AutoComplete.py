@@ -168,6 +168,15 @@ class AutoComplete:
         comp_lists = self.fetch_completions(comp_what, mode)
         if not comp_lists[0]:
             return
+
+        if mode == COMPLETE_ATTRIBUTES:
+            calltips = self.editwin.extensions.get('CallTips')
+            if calltips:
+                args = calltips.arg_names(evalfuncs)
+                if args:
+                    args = [a + '=' for a in args]
+                    comp_lists = sorted(comp_lists[0] + args), sorted(comp_lists[1] + args)
+
         self.autocompletewindow = self._make_autocomplete_window()
         return not self.autocompletewindow.show_window(
                 comp_lists, "insert-%dc" % len(comp_start),
