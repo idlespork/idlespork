@@ -111,6 +111,17 @@ class HyperParser:
                 self.rawtext[self.bracketing[self.indexbracket][0]]
                 not in ('#', '"', "'"))
 
+    def is_in_dict(self):
+        """Is the index given to the HyperParser in a dict getitem?"""
+        if not self.isopener[self.indexbracket]:
+            return True
+        ind = self.bracketing[self.indexbracket][0]
+        if self.rawtext[ind] == '#' or \
+                (self.rawtext[ind] in ['"', "'"] and
+                 not (self.rawtext[ind - 1:ind] == '[' or self.rawtext[ind - 2:ind] == '[u')):
+            return False
+        return True
+
     def get_surrounding_brackets(self, openers='([{', mustclose=False):
         """Return bracket indexes or None.
 
@@ -176,7 +187,7 @@ class HyperParser:
         """Return a string with the Python expression which ends at the
         given index, which is empty if there is no real one.
         """
-        if not self.is_in_code():
+        if not self.is_in_code() and not self.is_in_dict():
             raise ValueError("get_expression should only be called"
                              "if index is inside a code.")
 
