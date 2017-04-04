@@ -138,14 +138,11 @@ class AutoComplete:
         if hp.is_in_dict() and (not mode or mode==COMPLETE_KEYS) and evalfuncs:
             self._remove_autocomplete_window()
             mode = COMPLETE_KEYS
-            while i and curline[i - 1] in ID_CHARS:
+            while i and curline[i - 1] in ID_CHARS + '"' + "'":
                 i -= 1
             comp_start = curline[i:j]
-            if curline[i - 2:i] == "['":
-                hp.set_index("insert-%dc" % (len(curline) - (i - 2)))
-                comp_what = hp.get_expression()
-            elif curline[i - 3:i] == "[u'":
-                hp.set_index("insert-%dc" % (len(curline) - (i - 3)))
+            if curline[i - 1:i] == "[":
+                hp.set_index("insert-%dc" % (len(curline) - (i - 1)))
                 comp_what = hp.get_expression()
             else:
                 comp_what = ""
@@ -253,13 +250,26 @@ class AutoComplete:
             elif mode == COMPLETE_KEYS:
                     try:
                         entity = self.get_entity(what)
-                        smalll = bigl = sorted(entity.keys())
+                        smalll = bigl = sorted(set(map(self.key_repr, entity.keys())))
+                        if smalll[0] is None:
+                            del smalll[0]
                     except:
                         return [], []
 
             if not smalll:
                 smalll = bigl
             return smalll, bigl
+
+    @staticmethod
+    def key_repr(key):
+        try:
+            r = repr(key)
+            if r.startswith('<'):
+                return None
+            else:
+                return r
+        except:
+            return None
 
     def get_entity(self, name):
         """Lookup name in a namespace spanning sys.modules and __main.dict__"""

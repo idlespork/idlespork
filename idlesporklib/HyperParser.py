@@ -113,14 +113,11 @@ class HyperParser:
 
     def is_in_dict(self):
         """Is the index given to the HyperParser in a dict getitem?"""
-        if not self.isopener[self.indexbracket]:
-            return True
-        ind = self.bracketing[self.indexbracket][0]
-        if self.rawtext[ind] == '#' or \
-                (self.rawtext[ind] in ['"', "'"] and
-                 not (self.rawtext[ind - 1:ind] == '[' or self.rawtext[ind - 2:ind] == '[u')):
-            return False
-        return True
+        return (self.isopener[self.indexbracket] and
+                ((self.bracketing[self.indexbracket][0] and self.rawtext[self.bracketing[self.indexbracket][0]]
+                in ('"', "'") and self.rawtext[self.bracketing[self.indexbracket][0] - 1] == '[') or
+                 (self.rawtext[self.bracketing[self.indexbracket][0]]  == '[')
+                 ))
 
     def get_surrounding_brackets(self, openers='([{', mustclose=False):
         """Return bracket indexes or None.
