@@ -17,8 +17,8 @@ FILENAME_CHARS = string.ascii_letters + string.digits + os.curdir + "._~#$:-"
 # This string includes all chars that may be in an identifier
 ID_CHARS = string.ascii_letters + string.digits + "_"
 
-# These constants represent the two different types of completions
-COMPLETE_ATTRIBUTES, COMPLETE_FILES = range(1, 2+1)
+# These constants represent the three different types of completions
+COMPLETE_ATTRIBUTES, COMPLETE_FILES, COMPLETE_KEYS = range(1, 3+1)
 
 from idlesporklib import AutoCompleteWindow
 from idlesporklib.HyperParser import HyperParser
@@ -135,7 +135,21 @@ class AutoComplete:
         hp = HyperParser(self.editwin, "insert")
         curline = self.text.get("insert linestart", "insert")
         i = j = len(curline)
-        if (hp.is_in_string() or hp.is_in_command()) \
+        if hp.is_in_dict() and (not mode or mode==COMPLETE_KEYS) and evalfuncs:
+            self._remove_autocomplete_window()
+            mode = COMPLETE_KEYS
+            while i and curline[i - 1] in ID_CHARS:
+                i -= 1
+            comp_start = curline[i:j]
+            if curline[i - 2:i] == "['":
+                hp.set_index("insert-%dc" % (len(curline) - (i - 2)))
+                comp_what = hp.get_expression()
+            elif curline[i - 3:i] == "[u'":
+                hp.set_index("insert-%dc" % (len(curline) - (i - 3)))
+                comp_what = hp.get_expression()
+            else:
+                comp_what = ""
+        elif (hp.is_in_string() or hp.is_in_command()) \
             and (not mode or mode==COMPLETE_FILES):
             self._remove_autocomplete_window()
             mode = COMPLETE_FILES
@@ -202,6 +216,7 @@ class AutoComplete:
             return rpcclt.remotecall("exec", "get_the_completion_list",
                                      (what, mode), {})
         else:
+            bigl = smalll = []
             if mode == COMPLETE_ATTRIBUTES:
                 if what == "":
                     namespace = __main__.__dict__.copy()
@@ -235,6 +250,12 @@ class AutoComplete:
                     smalll = [s for s in bigl if s[:1] != '.']
                 except OSError:
                     return [], []
+            elif mode == COMPLETE_KEYS:
+                    try:
+                        entity = self.get_entity(what)
+                        smalll = bigl = sorted(entity.keys())
+                    except:
+                        return [], []
 
             if not smalll:
                 smalll = bigl
