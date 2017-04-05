@@ -243,33 +243,32 @@ class AutoComplete:
                     from os.path import normcase
                     expandedpath = os.path.expanduser(what)
                     bigl = os.listdir(expandedpath)
-                    bigl = sorted(set(bigl), cmp=lambda x,y: cmp(normcase(x), normcase(y)))
+                    try:
+                        cmp_ = cmp
+                    except NameError:
+                        cmp_ = lambda x, y: (x > y) - (x < y)
+                    bigl = sorted(set(bigl), cmp=lambda x,y: cmp_(normcase(x), normcase(y)))
                     smalll = [s for s in bigl if s[:1] != '.']
                 except OSError:
                     return [], []
             elif mode == COMPLETE_KEYS:
                     try:
                         entity = self.get_entity(what)
-                        smalll = bigl = sorted(set(map(self.key_repr, entity.keys())))
-                        if smalll[0] is None:
-                            del smalll[0]
+                        keys = set()
+                        for key in entity.keys():
+                            try:
+                                r = repr(key)
+                                if not r.startswith('<'):
+                                    keys.add(r)
+                            except:
+                                pass
+                        smalll = bigl = sorted(keys)
                     except:
                         return [], []
 
             if not smalll:
                 smalll = bigl
             return smalll, bigl
-
-    @staticmethod
-    def key_repr(key):
-        try:
-            r = repr(key)
-            if r.startswith('<'):
-                return None
-            else:
-                return r
-        except:
-            return None
 
     def get_entity(self, name):
         """Lookup name in a namespace spanning sys.modules and __main.dict__"""
