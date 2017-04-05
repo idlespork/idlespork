@@ -14,9 +14,13 @@ class ResourcesStatus(object):
         if psutil is not None:
             self.editwin = editwin
             self.text = self.editwin.text
-            self.editwin.status_bar.set_label('cpu', 'Cpu: ?', side=RIGHT)
-            self.editwin.status_bar.set_label('mem', 'Mem: ?', side=RIGHT)
-            self.text.after_idle(self.set_cpu_and_mem)
+            try:
+                interp = self.editwin.interp
+                self.editwin.status_bar.set_label('cpu', 'Cpu: ?', side=RIGHT)
+                self.editwin.status_bar.set_label('mem', 'Mem: ?', side=RIGHT)
+                self.text.after_idle(self.set_cpu_and_mem)
+            except AttributeError:
+                pass
         else:
             print("ResourcesStatus extension could not find the psutil module.")
 
