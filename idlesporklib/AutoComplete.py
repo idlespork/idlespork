@@ -40,6 +40,10 @@ class AutoComplete:
     popupwait = idleConf.GetOption("extensions", "AutoComplete",
                                    "popupwait", type="int", default=0)
 
+    # Flag to show only completions that actually contain typed word.
+    onlycontaining = idleConf.GetOption("extensions", "AutoComplete",
+                                        "onlycontaining", type="bool", default=False)
+
     def __init__(self, editwin=None):
         self.editwin = editwin
         if editwin is None:  # subprocess and test
@@ -132,6 +136,13 @@ class AutoComplete:
             self.text.after_cancel(self._delayed_completion_id)
             self._delayed_completion_id = None
 
+        # If the window is already open, show the big list of completions.
+        # This means that a double Ctrl-space opens the big list every time, which is nice.
+        if self.autocompletewindow is not None and self.autocompletewindow.autocompletewindow is not None:
+            showbig = True
+        else:
+            showbig = False
+
         hp = HyperParser(self.editwin, "insert")
         curline = self.text.get("insert linestart", "insert")
         i = j = len(curline)
@@ -188,10 +199,24 @@ class AutoComplete:
                     args = [a + '=' for a in args]
                     comp_lists = sorted(comp_lists[0] + args), sorted(comp_lists[1] + args)
 
+        # Check if we want to show only completion containing typed word.
+        if self.onlycontaining:
+            # Find such completions.
+            comp_lists = [name for name in comp_lists[0] if comp_start.lower() in name.lower()], comp_lists[1]
+            # If none were found, look in big list.
+            if not comp_lists[0]:
+                comp_lists = [name for name in comp_lists[1] if comp_start.lower() in name.lower()], comp_lists[1]
+            # If still none were found, just return the big list - which is the default anyway.
+            if not comp_lists[0]:
+                comp_lists = comp_lists[1], comp_lists[1]
+
+        if showbig:
+            comp_lists = comp_lists[1], []
+
         self.autocompletewindow = self._make_autocomplete_window()
         return not self.autocompletewindow.show_window(
                 comp_lists, "insert-%dc" % len(comp_start),
-                complete, mode, userWantsWin)
+                complete, mode, userWantsWin, onlycontaining=self.onlycontaining)
 
     def fetch_completions(self, what, mode):
         """Return a pair of lists of completions for something. The first list

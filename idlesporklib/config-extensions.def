@@ -35,6 +35,7 @@
 [AutoComplete]
 enable=True
 popupwait=2000
+onlycontaining=False
 [AutoComplete_cfgBindings]
 force-open-completions=<Control-Key-space>
 [AutoComplete_bindings]
