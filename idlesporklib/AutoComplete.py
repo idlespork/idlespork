@@ -44,6 +44,10 @@ class AutoComplete:
     onlycontaining = idleConf.GetOption("extensions", "AutoComplete",
                                         "onlycontaining", type="bool", default=False)
 
+    # Flag to auto complete imports.
+    imports = idleConf.GetOption("extensions", "AutoComplete",
+                                 "imports", type="bool", default=False)
+
     def __init__(self, editwin=None):
         self.editwin = editwin
         if editwin is None:  # subprocess and test
@@ -171,15 +175,44 @@ class AutoComplete:
         elif hp.is_in_code() and (not mode or mode==COMPLETE_ATTRIBUTES):
             self._remove_autocomplete_window()
             mode = COMPLETE_ATTRIBUTES
+
             while i and curline[i-1] in ID_CHARS:
                 i -= 1
             comp_start = curline[i:j]
             if i and curline[i-1] == '.':
-                hp.set_index("insert-%dc" % (len(curline)-(i-1)))
-                comp_what = hp.get_expression()
+                done = False
+                # Check if import completion is enabled.
+                if self.imports:
+                    import re
+                    # Try to match an import statement.
+                    match = re.search('import (.*)$', curline[:i-1])
+                    if match is not None:
+                        # Only complete if evalfuncs is on - since this evals an import.
+                        if not evalfuncs:
+                            return
+                        comp_what = 'import ' + match.group(1)
+                        done = True
+
+                if not done:
+                    hp.set_index("insert-%dc" % (len(curline)-(i-1)))
+                    comp_what = hp.get_expression()
+
                 if not comp_what or \
                    (not evalfuncs and comp_what.find('(') != -1):
                     return
+            # Check if we're completing imports and there's a space before last name.
+            elif self.imports and i and curline[i-1] == ' ':
+                import re
+                # Try to match a from-import statement.
+                match = re.search('from (.*) import $', curline[:i])
+                if match is not None:
+                    # Only complete if evalfuncs is on.
+                    if not evalfuncs:
+                        return
+                    # Convert to short import for get_entity.
+                    comp_what = 'import ' + match.group(1)
+                else:
+                    comp_what = ''
             else:
                 comp_what = ""
         else:
@@ -296,7 +329,19 @@ class AutoComplete:
             return smalll, bigl
 
     def get_entity(self, name):
-        """Lookup name in a namespace spanning sys.modules and __main.dict__"""
+        """Lookup name in a namespace spanning sys.modules and __main.dict__ or import module"""
+
+        # Check if we're completing imports and the entity is an import statement.
+        if self.imports and name.startswith('import '):
+            # importlib was added in Python 2.7.
+            try:
+                import importlib
+            except ImportError:
+                importlib = None
+            if importlib is not None:
+                # Import the module and return it.
+                return importlib.import_module(name[len('import '):])
+
         namespace = sys.modules.copy()
         namespace.update(__main__.__dict__)
         return eval(name, namespace)
