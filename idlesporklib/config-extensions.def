@@ -35,6 +35,8 @@
 [AutoComplete]
 enable=True
 popupwait=2000
+imports=False
+onlycontaining=False
 [AutoComplete_cfgBindings]
 force-open-completions=<Control-Key-space>
 [AutoComplete_bindings]
@@ -53,6 +55,9 @@ force-open-calltip=<Control-Key-backslash>
 [CallTips_bindings]
 try-open-calltip=<KeyRelease-parenleft>
 refresh-calltip=<KeyRelease-parenright> <KeyRelease-0>
+
+[ResourcesStatus]
+enable=False
 
 [CodeContext]
 enable=True

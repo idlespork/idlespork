@@ -57,6 +57,8 @@ class AutoCompleteWindow:
         = self.keyreleaseid = self.doubleclickid                         = None
         # Flag set if last keypress was a tab
         self.lastkey_was_tab = False
+        # Flag for showing only items containing typed text
+        self.onlycontaining = False
 
     def _change_start(self, newstart):
         min_len = min(len(self.start), len(newstart))
@@ -82,7 +84,15 @@ class AutoCompleteWindow:
                 j = m
             else:
                 i = m + 1
-        return min(i, len(self.completions)-1)
+
+        i = min(i, len(self.completions) - 1)
+
+        # If the typed text wasn't found, and we're only showing completion
+        # containing the text, jump to the start - not the bottom - since it's nicer.
+        if self.completions and self.onlycontaining and not self.completions[i].startswith(s):
+            i = 0
+
+        return i
 
     def _complete_string(self, s):
         """Assuming that s is the prefix of a string in self.completions,
@@ -134,7 +144,10 @@ class AutoCompleteWindow:
             newstart = selstart[:i]
         self._change_start(newstart)
 
-        if self.completions[cursel][:len(self.start)] == self.start:
+        # We want to show the small list if the typed text was found in it, or
+        # if it was found within some completion and we're showing only containing completions.
+        if (self.completions[cursel][:len(self.start)] == self.start or
+                (self.onlycontaining and self.start.lower() in self.completions[cursel].lower())):
             # start is a prefix of the selected completion
             self.listbox.configure(selectbackground=idleConf.GetHighlight(theme,'acselect','bg'),
                                    selectforeground=idleConf.GetHighlight(theme,'acselect','fg'),
@@ -149,6 +162,8 @@ class AutoCompleteWindow:
             )
             # If there are more completions, show them, and call me again.
             if self.morecompletions:
+                # When moving on to the big list, forget about showing only containing completions.
+                self.onlycontaining = False
                 self.completions = self.morecompletions
                 self.morecompletions = None
                 self.listbox.delete(0, END)
@@ -157,10 +172,11 @@ class AutoCompleteWindow:
                 self.listbox.select_set(self._binary_search(self.start))
                 self._selection_changed()
 
-    def show_window(self, comp_lists, index, complete, mode, userWantsWin):
+    def show_window(self, comp_lists, index, complete, mode, userWantsWin, onlycontaining=False):
         """Show the autocomplete list, bind events.
         If complete is True, complete the text, and if there is exactly one
         matching completion, don't open a list."""
+        self.onlycontaining = onlycontaining
         # Handle the start we already have
         self.completions, self.morecompletions = comp_lists
         self.mode = mode
