@@ -100,6 +100,30 @@ def replace_addresses(gui, txt):
     ret.append(txt)
     return ''.join(ret)
 
+def replace_links(txt):
+    # Replace links text with the real addresses.
+    # This is utilised by Squeezer when asked to open "less" or copy squeezed text,
+    # since we don't want to see "{{{IDLESPORK_LINK:0}}}" in our text.
+    # Furthermore, if txt is the output of "??", remove the first line.
+    match = re.match(r"^File \"([^\"]*)\", line ([0-9]*):\n", txt)
+    if match:
+        txt = txt[match.end():]
+
+    ret = []
+    m = re.search('\"{}([0-9]*){}\"'.format(PREFIX, SUFFIX), txt)
+    while m:
+        ret.append(txt[:m.start()])
+        ind = int(m.group(1))
+        if 0 <= ind < len(links):
+            ret.append('"{}"'.format(links[ind].txt))
+        else:
+            ret.append(m.group(0))
+        txt = txt[m.end():]
+        m = re.search('\"{}([0-9]*)\"'.format(PREFIX, SUFFIX), txt)
+    ret.append(txt)
+    return ''.join(ret)
+
+
 def parse(text, begin, end):
     begin = text.index(begin)
     end = text.index(end)

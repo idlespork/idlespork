@@ -97,7 +97,7 @@ class OutputWindow(EditorWindow):
             if rng and rng[0] != rng[1]:
                 start, end = rng
                 s = self.text.get(start, 'insert lineend')
-                match = re.match(r"^File \"([^\"]*)\", line ([0-9]*)", s)
+                match = re.match(r"^File \"([^\"]*)\", line ([0-9]*):\n", s)
                 if match:
                     result = match.group(1), int(match.group(2)) + s.count('\n') - 1
 

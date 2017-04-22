@@ -131,14 +131,14 @@ class ExpandingButton(Tkinter.Button):
         
     def copy(self, event):
         self.clipboard_clear()
-        self.clipboard_append(self.s, type='STRING')
+        self.clipboard_append(Links.replace_links(self.s), type='STRING')
         self.selection_own()
 
     def preview(self, event):
         from tempfile import mktemp
         fn = mktemp("longidletext")
         f = open(fn, "w")
-        f.write(self.s)
+        f.write(Links.replace_links(self.s))
         f.close()
         os.system(self.squeezer._PREVIEW_COMMAND % {"fn":fn})
             
