@@ -247,6 +247,9 @@ class EditorWindow(object):
         text.bind("<<del-word-left>>", self.del_word_left)
         text.bind("<<del-word-right>>", self.del_word_right)
 
+        # Bind menu key to right click menu.
+        text.bind("<Key-Menu>", self.right_menu_event)
+
         if flist:
             flist.inversedict[self] = key
             if key:
@@ -470,7 +473,9 @@ class EditorWindow(object):
     rmenu = None
 
     def right_menu_event(self, event):
-        self.text.mark_set("insert", "@%d,%d" % (event.x, event.y))
+        # If mouse was right clicked, set the cursor position.
+        if event.keysym != 'Menu':
+            self.text.mark_set("insert", "@%d,%d" % (event.x, event.y))
         if not self.rmenu:
             self.make_rmenu()
         rmenu = self.rmenu
@@ -490,7 +495,15 @@ class EditorWindow(object):
             state = getattr(self, verify_state)()
             rmenu.entryconfigure(label, state=state)
 
-        rmenu.tk_popup(event.x_root, event.y_root)
+        if event.keysym != 'Menu':
+            rmenu.tk_popup(event.x_root, event.y_root)
+        else:
+            # If Menu key was pressed, open the menu where the cursor is.
+            character = self.text.get('insert')
+            x, y, width, height = self.text.bbox('insert')
+            screen_x = x + (0 if character == u'\n' else width) + self.text.winfo_rootx()
+            screen_y = y + height + self.text.winfo_rooty()
+            rmenu.tk_popup(screen_x, screen_y)
         if iswin:
             self.text.config(cursor="ibeam")
 
