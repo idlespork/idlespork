@@ -48,6 +48,14 @@ class AutoComplete:
     imports = idleConf.GetOption("extensions", "AutoComplete",
                                  "imports", type="bool", default=False)
 
+    # Flag to complete after two tabs.
+    twotabstocomplete = idleConf.GetOption("extensions", "AutoComplete",
+                                           "twotabstocomplete", type="bool", default=True)
+
+    # Flag to complete when enter is pressed.
+    entertocomplete = idleConf.GetOption("extensions", "AutoComplete",
+                                         "entertocomplete", type="bool", default=False)
+
     def __init__(self, editwin=None):
         self.editwin = editwin
         if editwin is None:  # subprocess and test
@@ -62,7 +70,7 @@ class AutoComplete:
         self._delayed_completion_index = None
 
     def _make_autocomplete_window(self):
-        return AutoCompleteWindow.AutoCompleteWindow(self.text)
+        return AutoCompleteWindow.AutoCompleteWindow(self.text, self.twotabstocomplete, self.entertocomplete)
 
     def _remove_autocomplete_window(self, event=None):
         if self.autocompletewindow:

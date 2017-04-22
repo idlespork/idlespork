@@ -37,6 +37,8 @@ enable=True
 popupwait=2000
 imports=False
 onlycontaining=False
+twotabstocomplete = True
+entertocomplete = False
 [AutoComplete_cfgBindings]
 force-open-completions=<Control-Key-space>
 [AutoComplete_bindings]
