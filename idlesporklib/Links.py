@@ -32,12 +32,6 @@ class GotoMarkLink(Link):
 
     def after_sometime(self):
         self.gui.text.selection_clear()
-        sq = self.gui.extensions["Squeezer"]
-        if sq is not None:
-            for c in sq.expandingbuttons_code:
-                if self.mark in c.shell_marks:
-                    c.expand(None)
-                    break
 
         if self.line != 1:
             m = self.mark + " + %d lines linestart" % (self.line - 1)
