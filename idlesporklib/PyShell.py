@@ -325,11 +325,23 @@ class ModifiedColorDelegator(ColorDelegator):
     "Extend base class: colorizer for the shell window itself"
 
     def __init__(self):
+        # Flag for coloring all up to iomark. The way ColorDelegator is currently designed, it's not
+        # immediate to recolor an area in the middle of the shell.
+        self.from_iomark = True
         ColorDelegator.__init__(self, True)
         self.LoadTagDefs()
 
+    def recolorize(self, from_iomark=True):
+        # We need this here so that recolorize_main below, that will be called from ColorDelegator.recolorize,
+        # won't remove the to-do area we put somewhere in the middle.
+        self.from_iomark = from_iomark
+        super(ModifiedColorDelegator, self).recolorize()
+        self.from_iomark = True
+
     def recolorize_main(self):
-        self.tag_remove("TODO", "1.0", "iomark")
+        # Check if we're coloring only from iomark, i.e. not something in the middle.
+        if self.from_iomark:
+            self.tag_remove("TODO", "1.0", "iomark")
         self.tag_add("SYNC", "1.0", "iomark")
         ColorDelegator.recolorize_main(self)
 

@@ -98,8 +98,11 @@ class ExpandingButton(Tkinter.Button):
         if numoflines is None:
             numoflines = self.squeezer.count_lines(self.s)
 
-        caption = "Squeezed text (about %d lines). "\
-                  "Double-click to expand, middle-click to copy" % numoflines
+        # This is just a cute indicator if the squeezed area is stdout/stderr or stdin.
+        typ = 'code' if self.tags == 'stdin' else 'text'
+
+        caption = "Squeezed %s (about %d lines). "\
+                  "Double-click to expand, middle-click to copy" % (typ, numoflines)
         if self.squeezer._PREVIEW_COMMAND:
             caption += ", right-click to preview."
         else:
@@ -116,7 +119,17 @@ class ExpandingButton(Tkinter.Button):
         rem_txt = self.s[Squeezer._MAX_EXPAND:]
 
         basetext = _get_base_text(self.editwin)
-        basetext.insert(self.text.index(self), expanded_txt, self.tags)
+
+        # If it's stdin that we're expanding, we'll have to recolor it.
+        if self.tags == 'stdin':
+            ind = self.text.index(self)
+            # Recolor only works on areas tagged with TO-DO.
+            basetext.insert(ind, expanded_txt, 'TODO')
+            self.editwin.color.recolorize(False)
+            # In order to be able to squeeze again, we must set the tag stdin.
+            basetext.tag_add('stdin', ind, '%s +%dc' % (ind, len(expanded_txt)))
+        else:
+            basetext.insert(self.text.index(self), expanded_txt, self.tags)
 
         # Convert txt links into actual links
         Links.parse(basetext, "%d.0" % (int(self.text.index(self).split('.')[0]) - len(expanded_txt.split('\n'))),
@@ -159,6 +172,9 @@ class Squeezer:
         "extensions", "Squeezer",
         "preview-command-"+{"nt":"win"}.get(os.name, os.name),
         default="", raw=True)
+
+    # Flag for whether or not stdin can be squeezing
+    _SQUEEZE_CODE = idleConf.GetOption("extensions", "Squeezer", "squeeze-code", type="bool", default=False)
 
     menudefs = [
         ('edit', [
@@ -267,9 +283,13 @@ class Squeezer:
         for tag_name in ("stdout","stderr"):
             if tag_name in insert_tag_names:
                 break
-        else: # no tag associated with the index
-            self.text.bell()
-            return "break"
+        else:
+            # Check if code squeezing is enabled.
+            if self._SQUEEZE_CODE and 'stdin' in insert_tag_names:
+                tag_name = 'stdin'
+            else: # no tag associated with the index
+                self.text.bell()
+                return "break"
 
         # find the range to squeeze
         rng = self.text.tag_prevrange(tag_name, Tkinter.INSERT+"+1c")
@@ -281,6 +301,12 @@ class Squeezer:
         if not rng or rng[0]==rng[1]:
             return False
         start, end = rng
+
+        # If it's code that we are squeezing then we only squeeze from the second row. I think this is nicer, because
+        # mostly we'll be squeezing function definitions, and this will keep the 'def ...' visible.
+        if tag_name == 'stdin':
+            start = self.text.index("%s+1l linestart" % start)
+
         old_expandingbutton = self.find_button(end)
         
         s = self.text.get(start, end)

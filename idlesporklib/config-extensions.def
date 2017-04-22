@@ -121,6 +121,7 @@ preview-command-posix=(xterm -e less %(fn)s; rm -f %(fn)s) &
 preview-command-win=notepad %(fn)s
 preview-command-mac=
 max-expand=50000
+squeeze-code=False
 [Squeezer_cfgBindings]
 squeeze-last-output=<Control-Key-equal>
 expand-last-squeezed=<Control-Key-plus> <Control-Shift-Key-equal> <Control-Shift-Key-plus>

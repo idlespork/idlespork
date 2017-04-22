@@ -200,6 +200,13 @@ class ColorDelegator(Delegator):
                 mark = next
                 next = self.index(mark + "+%d lines linestart" %
                                          lines_to_get)
+
+                # Why would we color more than we're supposed to???
+                # In the case of recoloring an stdin area, called by expanding a squeezer, this is essential.
+                if tail.split('.')[0] < next.split('.')[0] or (tail.split('.')[0] == next.split('.')[0]
+                                                               and tail.split('.')[1] < next.split('.')[1]):
+                    next = tail
+
                 lines_to_get = min(lines_to_get * 2, 100)
                 ok = "SYNC" in self.tag_names(next + "-1c")
                 line = self.get(mark, next)
