@@ -1,5 +1,5 @@
 import re
-from Tkinter import SEL, INSERT, IntVar
+from Tkinter import SEL, INSERT
 
 
 PREFIX = '{{{IDLESPORK_LINK:'
@@ -35,6 +35,14 @@ class GotoMarkLink(Link):
 
     def after_sometime(self):
         self.gui.text.selection_clear()
+
+        # If squeezing code is allowed, we have to check if the mark is in a squeezer.
+        sq = self.gui.extensions["Squeezer"]
+        if sq is not None and sq._SQUEEZE_CODE:
+            # Squeezed code is always one line under the mark.
+            button = sq.find_button(self.gui.text.index(self.mark + ' + 1 line linestart'))
+            if button is not None:
+                button.expand(None)
 
         if self.line != 1:
             m = self.mark + " + %d lines linestart" % (self.line - 1)
@@ -104,7 +112,7 @@ def replace_links(txt):
     # Replace links text with the real addresses.
     # This is utilised by Squeezer when asked to open "less" or copy squeezed text,
     # since we don't want to see "{{{IDLESPORK_LINK:0}}}" in our text.
-    # Furthermore, if txt is the output of "??", remove the first line.
+    # Furthermore, if txt is the output of "??", w
     match = re.match(r"^File \"([^\"]*)\", line ([0-9]*):\n", txt)
     if match:
         txt = txt[match.end():]

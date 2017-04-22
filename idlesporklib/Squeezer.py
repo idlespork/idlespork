@@ -127,6 +127,7 @@ class ExpandingButton(Tkinter.Button):
             basetext.insert(ind, expanded_txt, 'TODO')
             self.editwin.color.recolorize(False)
             # In order to be able to squeeze again, we must set the tag stdin.
+
             basetext.tag_add('stdin', ind, '%s +%dc' % (ind, len(expanded_txt)))
         else:
             basetext.insert(self.text.index(self), expanded_txt, self.tags)
@@ -280,14 +281,15 @@ class Squeezer:
         
     def squeeze_current_text_event(self, event):
         insert_tag_names = self.text.tag_names(Tkinter.INSERT)
-        for tag_name in ("stdout","stderr"):
+        for tag_name in ("stdout", "stderr"):
             if tag_name in insert_tag_names:
                 break
         else:
             # Check if code squeezing is enabled.
             if self._SQUEEZE_CODE and 'stdin' in insert_tag_names:
                 tag_name = 'stdin'
-            else: # no tag associated with the index
+            else:
+                # no tag associated with the index
                 self.text.bell()
                 return "break"
 
