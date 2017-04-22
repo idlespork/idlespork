@@ -161,6 +161,7 @@ class IdleConf:
         self.cfg = {}  # TODO use to select userCfg vs defaultCfg
         self.CreateConfigHandlers()
         self.LoadCfgFiles()
+        self.extension_members = {}
 
 
     def CreateConfigHandlers(self):
@@ -216,7 +217,7 @@ class IdleConf:
         # TODO continue without userDIr instead of exit
         return userDir
 
-    def GetOption(self, configType, section, option, default=None, type=None,
+    def _GetOption(self, configType, section, option, default=None, type=None,
                   warn_on_default=True, raw=False):
         """Return a value for configType section option, or default.
 
@@ -258,6 +259,30 @@ class IdleConf:
             except IOError:
                 pass
         return default
+
+    def GetOption(self, configType, section, option, default=None, type=None,
+                  warn_on_default=True, raw=False, member_name=None):
+        res = self._GetOption(configType, section, option, default=default, type=type,
+                              warn_on_default=warn_on_default, raw=raw)
+        if member_name:
+            # Remember the extension member corresponding to this option.
+            self.extension_members[(configType, section, option)] = member_name
+        return res
+
+    def SetExtensionMember(self, configType, section, option, value):
+        # If we know the name of the extension class member corresponding to the option,
+        # we can set right now without requiring a restart.
+        try:
+            import importlib
+            module = importlib.import_module('idlesporklib.' + section)
+            if module is not None:
+                cls = getattr(module, section, None)
+                if cls is not None:
+                    setattr(cls, self.extension_members[(configType, section, option)], value)
+                    return True
+        except:
+            return False
+
 
     def SetOption(self, configType, section, option, value):
         """Set section option to value in user config file."""

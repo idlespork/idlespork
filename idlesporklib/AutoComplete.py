@@ -9,7 +9,7 @@ import string
 import keyword
 import PyShell
 
-from idlesporklib.configHandler import idleConf
+from configHandler import idleConf
 
 # This string includes all chars that may be in a file name (without a path
 # separator)
@@ -20,8 +20,8 @@ ID_CHARS = string.ascii_letters + string.digits + "_"
 # These constants represent the three different types of completions
 COMPLETE_ATTRIBUTES, COMPLETE_FILES, COMPLETE_KEYS = range(1, 3+1)
 
-from idlesporklib import AutoCompleteWindow
-from idlesporklib.HyperParser import HyperParser
+import AutoCompleteWindow
+from HyperParser import HyperParser
 
 import __main__
 
@@ -42,19 +42,19 @@ class AutoComplete:
 
     # Flag to show only completions that actually contain typed word.
     onlycontaining = idleConf.GetOption("extensions", "AutoComplete",
-                                        "onlycontaining", type="bool", default=False)
+                                        "onlycontaining", type="bool", default=False, member_name='onlycontaining')
 
     # Flag to auto complete imports.
     imports = idleConf.GetOption("extensions", "AutoComplete",
-                                 "imports", type="bool", default=False)
+                                 "imports", type="bool", default=False, member_name='imports')
 
     # Flag to complete after two tabs.
     twotabstocomplete = idleConf.GetOption("extensions", "AutoComplete",
-                                           "twotabstocomplete", type="bool", default=True)
+                                           "twotabstocomplete", type="bool", default=True, member_name='twotabstocomplete')
 
     # Flag to complete when enter is pressed.
     entertocomplete = idleConf.GetOption("extensions", "AutoComplete",
-                                         "entertocomplete", type="bool", default=False)
+                                         "entertocomplete", type="bool", default=False, member_name='entertocomplete')
 
     def __init__(self, editwin=None):
         self.editwin = editwin

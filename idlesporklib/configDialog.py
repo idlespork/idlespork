@@ -1358,13 +1358,32 @@ class ConfigDialog(Toplevel):
     def save_all_changed_extensions(self):
         """Save configuration changes to the user config file."""
         has_changes = False
+        req_restart = []
+        noreq_restart = []
         for ext_name in self.extensions:
             options = self.extensions[ext_name]
             for opt in options:
                 if self.set_extension_value(ext_name, opt):
                     has_changes = True
+                    # Try to set the extension option right now.
+                    if idleConf.SetExtensionOption('extensions', ext_name, opt['name'],
+                                                 idleConf.GetOption('extensions', ext_name, opt['name'],
+                                                                    opt['default'], opt['type'])):
+                        noreq_restart.append((ext_name, opt['name']))
+                    else:
+                        req_restart.append((ext_name, opt['name']))
         if has_changes:
             self.ext_userCfg.Save()
+
+            msg = ""
+            if noreq_restart:
+                msg += "The following settings do not require restart:" \
+                       "\n{}\n".format('\n'.join('{}.{}'.format(ext, opt) for ext, opt in noreq_restart))
+            if req_restart:
+                msg += "The following settings require restart:" \
+                       "\n{}\n".format('\n'.join('{}.{}'.format(ext, opt) for ext, opt in req_restart))
+
+            tkMessageBox.showinfo("Applied settings", msg, parent=self)
 
 
 help_common = '''\

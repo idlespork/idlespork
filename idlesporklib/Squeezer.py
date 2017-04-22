@@ -75,11 +75,14 @@ def _countlines(s, linewidth=_LINEWIDTH, tabwidth=_TABWIDTH):
 # define the extension's classes
 
 class ExpandingButton(Tkinter.Button):
-    def __init__(self, s, tags, numoflines, squeezer):
+    def __init__(self, s, tags, numoflines, squeezer, def_line=None):
         self.tags = tags
         self.squeezer = squeezer
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
+
+        # If this is for a stdin area, we should remember the line just before so it will appear in preview and copy.
+        self.def_line = def_line
 
         # This makes sure links are preserved after squeezing and expanding
         self.s = Links.replace_addresses(editwin, s)
@@ -142,17 +145,24 @@ class ExpandingButton(Tkinter.Button):
         else:
             self.s = rem_txt
             self.update_btn()
+
+    def copypreview_txt(self):
+        # Return correct text for copy and preview.
+        if self.tags == 'stdin':
+            return self.def_line + '\n' + self.s
+        else:
+            return Links.replace_links(self.s)
         
     def copy(self, event):
         self.clipboard_clear()
-        self.clipboard_append(Links.replace_links(self.s), type='STRING')
+        self.clipboard_append(self.copypreview_txt(), type='STRING')
         self.selection_own()
 
     def preview(self, event):
         from tempfile import mktemp
         fn = mktemp("longidletext")
         f = open(fn, "w")
-        f.write(Links.replace_links(self.s))
+        f.write(self.copypreview_txt())
         f.close()
         os.system(self.squeezer._PREVIEW_COMMAND % {"fn":fn})
             
@@ -175,7 +185,8 @@ class Squeezer:
         default="", raw=True)
 
     # Flag for whether or not stdin can be squeezing
-    _SQUEEZE_CODE = idleConf.GetOption("extensions", "Squeezer", "squeeze-code", type="bool", default=False)
+    _SQUEEZE_CODE = idleConf.GetOption("extensions", "Squeezer", "squeeze-code", type="bool", default=False,
+                                       member_name='_SQUEEZE_CODE')
 
     menudefs = [
         ('edit', [
@@ -307,7 +318,12 @@ class Squeezer:
         # If it's code that we are squeezing then we only squeeze from the second row. I think this is nicer, because
         # mostly we'll be squeezing function definitions, and this will keep the 'def ...' visible.
         if tag_name == 'stdin':
+            # It's nice to save the line just before, the "def" line, so it appears in preview and copy
+            # of the ExpandingButton.
+            def_line = self.text.get(start, start + " lineend")
             start = self.text.index("%s+1l linestart" % start)
+        else:
+            def_line = None
 
         old_expandingbutton = self.find_button(end)
         
@@ -326,7 +342,7 @@ class Squeezer:
 
         # prepare an ExpandingButton
         numoflines = self.count_lines(s)
-        expandingbutton = ExpandingButton(s, tag_name, numoflines, self)
+        expandingbutton = ExpandingButton(s, tag_name, numoflines, self, def_line=def_line)
         # insert the ExpandingButton to the Text
         self.text.window_create(start, window=expandingbutton,
                                 padx=3, pady=5)
