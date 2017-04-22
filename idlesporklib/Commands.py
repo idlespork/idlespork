@@ -11,6 +11,7 @@ CompilerPatch.patch_compiler()
 import time
 import parser
 import symbol
+import Links
 
 class CommandError(Exception):
     pass
@@ -221,7 +222,18 @@ def get_code(x):
     if isinstance(x,types.FunctionType) or isinstance(x,types.TypeType) \
        or isinstance(x,types.MethodType):
         try:
-            return inspect.getsource(x)
+            source =  inspect.getsource(x)
+            filename = inspect.getfile(x)
+            lineno = inspect.findsource(x)[1] + 1
+
+            # Create a link to the position
+            if filename.startswith("<pyshell#") and filename.endswith('>'):
+                link = Links.create_link(Links.GotoMarkLink(None, filename, filename[1:-1], lineno))
+            else:
+                link = Links.FileLink(None, filename, filename, lineno).create()
+
+            return 'File "{}", line {}:\n{}'.format(link, lineno, source)
+
         except IOError:
             pass
         except TypeError,e:

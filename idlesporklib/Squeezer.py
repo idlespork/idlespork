@@ -8,6 +8,7 @@ Squeezer - using this extension will make long texts become a small button.
 import re
 from PyShell import PyShell
 from configHandler import idleConf
+import Links
 import Tkinter
 import tkFont
 import os
@@ -75,11 +76,13 @@ def _countlines(s, linewidth=_LINEWIDTH, tabwidth=_TABWIDTH):
 
 class ExpandingButton(Tkinter.Button):
     def __init__(self, s, tags, numoflines, squeezer):
-        self.s = s
         self.tags = tags
         self.squeezer = squeezer
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
+
+        # This makes sure links are preserved after squeezing and expanding
+        self.s = Links.replace_addresses(editwin, s)
         
         Tkinter.Button.__init__(self, text,
                                 text=self.get_caption(numoflines),
@@ -114,6 +117,11 @@ class ExpandingButton(Tkinter.Button):
 
         basetext = _get_base_text(self.editwin)
         basetext.insert(self.text.index(self), expanded_txt, self.tags)
+
+        # Convert txt links into actual links
+        Links.parse(basetext, "%d.0" % (int(self.text.index(self).split('.')[0]) - len(expanded_txt.split('\n'))),
+                    self.text.index(self))
+
         if len(rem_txt) == 0:
             basetext.delete(self)
             self.squeezer.expandingbuttons.remove(self)
