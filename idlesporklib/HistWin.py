@@ -75,6 +75,7 @@ class HistWin(object):
         self.lst.delete(idx)
 
     def history_window_toggle_event(self, evt):
+        """Opens a window containing the entire history of entered commands"""
         self.toggle()
         return "break"
 

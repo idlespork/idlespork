@@ -163,10 +163,6 @@ class IdleConf:
         self.LoadCfgFiles()
         self.extension_members = {}
 
-        # Dictionary of events' docstrings.
-        self.events_docstrings = {}
-
-
     def CreateConfigHandlers(self):
         "Populate default and user config parser dictionaries."
         #build idle install path
@@ -545,24 +541,6 @@ class IdleConf:
                         'extensions', keysName, eventName, default='').split()
                 event = '<<' + eventName + '>>'
                 extKeys[event] = binding
-
-                # Try to get docstring for event method and save for later.
-                try:
-                    cls = self.GetExtensionClass(extensionName)
-                    if cls is not None:
-                        methodname = eventName.replace("-", "_")
-                        while methodname[:1] == '<':
-                            methodname = methodname[1:]
-                        while methodname[-1:] == '>':
-                            methodname = methodname[:-1]
-                        methodname += "_event"
-                        method = getattr(cls, methodname)
-                        if method is not None and method.__doc__ is not None:
-                            self.events_docstrings[eventName] = method.__doc__
-                except:
-                    pass
-
-
         return extKeys
 
     def GetExtensionBindings(self, extensionName):

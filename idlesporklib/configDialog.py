@@ -713,7 +713,9 @@ class ConfigDialog(Toplevel):
     def KeyBindingSelected(self, event):
         # Show docstring for event.
         try:
-            docstring = idleConf.events_docstrings.get(event.widget.get(int(event.widget.curselection()[0])).split(' - ')[0])
+            import MultiCall
+            eventname = event.widget.get(int(event.widget.curselection()[0])).split(' - ')[0]
+            docstring = MultiCall.bound_events.get(eventname).__doc__
             if docstring:
                 from MultiLineRun import MultiLineRun
                 self.keyDoc.configure(text=MultiLineRun.dedent_text(docstring).strip())
