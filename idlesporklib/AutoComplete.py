@@ -97,7 +97,8 @@ class AutoComplete:
             self.editwin.executing
 
     def force_open_completions_event(self, event):
-        """Happens when the user really wants to open a completion list, even
+        """
+        Happens when the user really wants to open a completion list, even
         if a function call is needed.
         """
         if self.is_executing():
@@ -105,7 +106,8 @@ class AutoComplete:
         self.open_completions(True, False, True)
 
     def try_open_completions_event(self, event):
-        """Happens when it would be nice to open a completion list, but not
+        """
+        Happens when it would be nice to open a completion list, but not
         really necessary, for example after an dot, so function
         calls won't be made.
         """
@@ -122,7 +124,8 @@ class AutoComplete:
                                          COMPLETE_FILES)
 
     def autocomplete_event(self, event):
-        """Happens when the user wants to complete his word, and if necessary,
+        """
+        Happens when the user wants to complete his word, and if necessary,
         open a completion list after that (if there is more than one
         completion)
         """

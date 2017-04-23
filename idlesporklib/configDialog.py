@@ -361,6 +361,11 @@ class ConfigDialog(Toplevel):
         frameKeySets.pack(side=BOTTOM, padx=5, pady=5, fill=BOTH)
         #frameCustom
         self.buttonNewKeys.pack(side=BOTTOM, fill=X, padx=5, pady=5)
+
+        # Message widget for docstring of event.
+        self.keyDoc = Message(frameCustom, text='')
+        self.keyDoc.pack(side=BOTTOM, fill=X, padx=5, pady=5)
+
         frameTarget.pack(side=LEFT, padx=5, pady=5, expand=TRUE, fill=BOTH)
         #frame target
         frameTarget.columnconfigure(0, weight=1)
@@ -706,6 +711,18 @@ class ConfigDialog(Toplevel):
             self.CreateNewKeySet(newKeysName)
 
     def KeyBindingSelected(self, event):
+        # Show docstring for event.
+        try:
+            docstring = idleConf.events_docstrings.get(event.widget.get(int(event.widget.curselection()[0])).split(' - ')[0])
+            if docstring:
+                from MultiLineRun import MultiLineRun
+                self.keyDoc.configure(text=MultiLineRun.dedent_text(docstring).strip())
+                self.keyDoc.configure(width=self.buttonNewKeys.winfo_width())
+            else:
+                self.keyDoc.configure(text='')
+        except:
+            self.keyDoc.configure(text='')
+
         self.buttonNewKeys.config(state=NORMAL)
 
     def CreateNewKeySet(self, newKeySetName):

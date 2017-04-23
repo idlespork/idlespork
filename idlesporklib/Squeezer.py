@@ -272,6 +272,7 @@ class Squeezer:
         return _countlines(s, linewidth, tabwidth)
 
     def expand_last_squeezed_event(self, event):
+        """Expands bottom most squeezed block"""
         if self.expandingbuttons:
             self.expandingbuttons[-1].expand(event)
         else:
@@ -279,6 +280,7 @@ class Squeezer:
         return "break"
 
     def preview_last_squeezed_event(self, event):
+        """Opens a defined application to show squeezed text"""
         if self._PREVIEW_COMMAND and self.expandingbuttons:
             self.expandingbuttons[-1].preview(event)
         else:
@@ -286,6 +288,7 @@ class Squeezer:
         return "break"
 
     def squeeze_last_output_event(self, event):
+        """Squeezes bottom most un-squeezed block"""
         last_console = self.text.tag_prevrange("console",Tkinter.END)
         if not last_console:
             return "break"
@@ -306,6 +309,7 @@ class Squeezer:
         return "break"
         
     def squeeze_current_text_event(self, event):
+        """Squeeze selected block"""
         insert_tag_names = self.text.tag_names(Tkinter.INSERT)
         for tag_name in ("stdout", "stderr"):
             if tag_name in insert_tag_names:

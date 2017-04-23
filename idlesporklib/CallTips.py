@@ -50,20 +50,23 @@ class CallTips:
             self.calltip = None
 
     def force_open_calltip_event(self, event):
-        """Happens when the user really wants to open a CallTip, even if a
+        """
+        Happens when the user really wants to open a CallTip, even if a
         function call is needed.
         """
         self.open_calltip(True)
 
     def try_open_calltip_event(self, event):
-        """Happens when it would be nice to open a CallTip, but not really
+        """
+        Happens when it would be nice to open a CallTip, but not really
         necessary, for example after an opening bracket, so function calls
         won't be made.
         """
         self.open_calltip(False)
 
     def refresh_calltip_event(self, event):
-        """If there is already a calltip window, check if it is still needed,
+        """
+        If there is already a calltip window, check if it is still needed,
         and if so, reload it.
         """
         if self.calltip and self.calltip.is_active():
