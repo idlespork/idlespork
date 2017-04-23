@@ -14,9 +14,7 @@
 
 from __future__ import print_function
 
-from idlesporklib.configHandler import idleConf
 from idlesporklib.Delegator import Delegator
-import time
 import re
 import sys
 import traceback
@@ -46,6 +44,12 @@ class MultiLineDelegator(Delegator):
 
 
 class MultiLineRun(object):
+    """
+    This extension allows for pasting of multiple lines of code into the shell for execution, and adds a
+    right click menu item to run multiple selected lines.
+
+    Developed by Roger D. Serwy for IDLEX, and imported by Ofir Reich to idlespork.
+    """
     # eol code from IOBinding.py
     eol = r"(\r\n)|\n|\r"  # \r\n (Windows), \n (UNIX), or \r (Mac)
     eol_re = re.compile(eol)
@@ -81,20 +85,26 @@ class MultiLineRun(object):
 
         return "\n".join(lines)
 
-    def dedent(self, lines):
+    @staticmethod
+    def dedent_text(text):
+        return '\n'.join(MultiLineRun.dedent(text.splitlines()))
+
+    @staticmethod
+    def dedent(lines):
         """
         remove maximal amount of indents/spaces shared by all lines
         to enable pasting an equally indented region
         """
         # exclude commented-out lines, empty lines for calculation of greatest common indent to strip
 
-        indentation = self.find_max_indent(lines)
+        indentation = MultiLineRun.find_max_indent(lines)
         indentation_len = len(indentation)
         lines = [line[indentation_len:] if line.startswith(indentation) else line
                  for line in lines]
         return lines
 
-    def find_max_indent(self, lines):
+    @staticmethod
+    def find_max_indent(lines):
         """
         Return the common indentation shared by all lines,
         not including empty and comment lines

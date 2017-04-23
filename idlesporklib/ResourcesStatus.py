@@ -10,6 +10,11 @@ except ImportError:
 
 
 class ResourcesStatus(object):
+    """
+    Extension to show cpu and memory usage in the status bar.
+
+    * Must have the package psutil installed.
+    """
     def __init__(self, editwin):
         if psutil is not None:
             self.editwin = editwin

@@ -171,7 +171,22 @@ class ExpandingButton(Tkinter.Button):
         self.update_btn()
 
 class Squeezer:
+    """
+    Extension to squeeze long output into a button
 
+    This file was originally copied for Tal Einat's Squeezer package.
+
+    Options:
+        max-num-of-lines - output bigger than this will be squeezed.
+
+        max-expand - output will never be more than this amount of characters.
+
+        preview-command-nt(-win) - command to open preview application.
+
+        squeeze-code - flag for allowing to squeeze code.
+
+    Configure the key bindings expand-last-squeezed, preview-last-squeezed and squeeze-current-text.
+    """
     _MAX_NUM_OF_LINES = idleConf.GetOption("extensions", "Squeezer",
                                            "max-num-of-lines", type="int",
                                            default=30)

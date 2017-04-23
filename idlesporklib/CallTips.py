@@ -16,6 +16,11 @@ from idlesporklib.HyperParser import HyperParser
 
 
 class CallTips:
+    """
+    Extension that shows tips for function calls
+
+    Configure the force-open-calltip key binding.
+    """
 
     menudefs = [
         ('edit', [

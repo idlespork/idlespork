@@ -30,6 +30,21 @@ if os.altsep:  # e.g. '/' on Windows...
     SEPS += os.altsep
 
 class AutoComplete:
+    """
+    Extension to allow automatic completion of text.
+
+    Set the autocomplete and try-open-completions key bindings.
+    Options:
+        popupwait - how many millisecs to wait before opening window.
+
+        onlycontaining - if True, the autocomplete window will first only show names that contain the typed text.
+    If you double press the key for autocomplete, the list of names will grow to include all names.
+
+        imports - if True, names available for import statements will be completed too.
+
+        twotabstocomplete - sets if two tabs are required to complete text once window is open.
+
+        entertocomplete - sets if pressing enter completes a name."""
 
     menudefs = [
         ('edit', [

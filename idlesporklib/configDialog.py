@@ -11,7 +11,7 @@ Refer to comments in EditorWindow autoindent code for details.
 """
 from Tkinter import Toplevel, Frame, Button, StringVar, BooleanVar, IntVar, \
                     LabelFrame, Listbox, Scrollbar, Checkbutton, Label, \
-                    Scale, Text, Radiobutton, Entry, Canvas
+                    Scale, Text, Radiobutton, Entry, Canvas, Message
 from Tkinter import TRUE, FALSE, TOP, BOTTOM, BOTH, LEFT, RIGHT, GROOVE, SOLID, \
                     X, Y, W, NONE, END, DISABLED, E, HORIZONTAL, NSEW, NS, EW, \
                     NORMAL, ANCHOR, NW, VERTICAL
@@ -1319,9 +1319,16 @@ class ConfigDialog(Toplevel):
 
     def create_extension_frame(self, ext_name):
         """Create a frame holding the widgets to configure one extension"""
-        f = VerticalScrolledFrame(self.details_frame, height=250, width=250)
+        f = VerticalScrolledFrame(self.details_frame, width=250)
         self.config_frame[ext_name] = f
-        entry_area = f.interior
+
+        top = Frame(f.interior)
+        bottom = Frame(f.interior)
+        top.pack(side='top', fill='x', expand=False)
+        bottom.pack(side='bottom', fill='both', expand=True)
+
+        entry_area = top
+        row = 0
         # create an entry for each configuration option
         for row, opt in enumerate(self.extensions[ext_name]):
             # create a row with a label and entry/checkbutton
@@ -1341,6 +1348,12 @@ class ConfigDialog(Toplevel):
             else:
                 Entry(entry_area, textvariable=var
                       ).grid(row=row, column=1, sticky=NSEW, padx=7)
+
+        cls = idleConf.GetExtensionClass(ext_name)
+        if cls is not None:
+            from MultiLineRun import MultiLineRun
+            Message(bottom, text=MultiLineRun.dedent_text(cls.__doc__ or ''), width=240).pack(side=LEFT)
+
         return
 
     def set_extension_value(self, section, opt):

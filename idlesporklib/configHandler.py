@@ -277,11 +277,18 @@ class IdleConf:
         else:
             member = self.extension_members[(configType, section, option)]
 
+        cls = self.GetExtensionClass(section)
+        if cls is not None:
+            setattr(cls, member, value)
+            return True
+        else:
+            return False
+
+    def GetExtensionClass(self, section):
         try:
             # First we try using PyShell.flist, that should work, given that flist is defined in PyShell.main.
             import PyShell
-            setattr(PyShell.flist.pyshell.extensions[section], member, value)
-            return True
+            return PyShell.flist.pyshell.extensions[section]
         except:
             try:
                 # But just in case the above didn't work, for who knows what reason, lets try importlib.
@@ -289,12 +296,9 @@ class IdleConf:
                 import importlib
                 module = importlib.import_module('idlesporklib.' + section)
                 if module is not None:
-                    cls = getattr(module, section, None)
-                    if cls is not None:
-                        setattr(cls, member, value)
-                        return True
+                    return getattr(module, section, None)
             except:
-                return False
+                return None
 
 
     def SetOption(self, configType, section, option, value):
