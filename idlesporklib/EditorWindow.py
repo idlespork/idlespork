@@ -493,6 +493,11 @@ class EditorWindow(object):
             if verify_state is None:
                 continue
             state = getattr(self, verify_state)()
+
+            underline = label.find('_')
+            if underline != -1:
+                label = label[:underline] + label[underline + 1:]
+
             rmenu.entryconfigure(label, state=state)
 
         if event.keysym != 'Menu':
@@ -519,7 +524,13 @@ class EditorWindow(object):
             if label is not None:
                 def command(text=self.text, eventname=eventname):
                     text.event_generate(eventname)
-                rmenu.add_command(label=label, command=command)
+
+                underline = label.find('_')
+                if underline != -1:
+                    label = label[:underline] + label[underline + 1:]
+                    rmenu.add_command(label=label, command=command, underline=underline)
+                else:
+                    rmenu.add_command(label=label, command=command)
             else:
                 rmenu.add_separator()
         self.rmenu = rmenu

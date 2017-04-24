@@ -243,7 +243,7 @@ class Squeezer:
             # Add squeeze-current-text to the right-click menu
             text.bind("<<squeeze-current-text>>",
                       self.squeeze_current_text_event)
-            _add_to_rmenu(editwin, [("Squeeze current text",
+            _add_to_rmenu(editwin, [("_Squeeze current text",
                                      "<<squeeze-current-text>>")])
 
     def count_lines(self, s):

@@ -67,7 +67,7 @@ class MultiLineRun(object):
         if wsys == 'x11':
             self.text.bind('<Button-2>', self.paste, '+')  # For X11 middle click
 
-        self.editwin.rmenu_specs.append(("Run lines", "<<run-lines>>", 'rmenu_check_copy'))
+        self.editwin.rmenu_specs.append(("_Run lines", "<<run-lines>>", 'rmenu_check_copy'))
         self.text.bind("<<run-lines>>", self.run_lines)
 
     def paste(self, event=None):
@@ -135,7 +135,15 @@ class MultiLineRun(object):
             return
 
         code = '\n'.join(self.dedent(code))
-        self.text.insert('end', code)
+        self.mld.paste = True
+        self.text.insert('end', code, 'TODO')
         self.text.tag_remove('sel', "1.0", 'end')
+        self.editwin.color.recolorize(False)
+        self.text.tag_add('stdin', 'iomark', 'end')
+
+        mark = 'pyshell#%d' % self.editwin.interp.gid
+        self.text.mark_set(mark, 'iomark')
+        self.text.mark_gravity(mark, 'left')
+
         self.editwin.interp.runcmd_from_source(code)
         self.text.see('end')

@@ -283,7 +283,8 @@ class IdleConf:
         else:
             return False
 
-    def GetExtensionClass(self, section):
+    @staticmethod
+    def GetExtensionClass(section):
         try:
             # First we try using PyShell.flist, that should work, given that flist is defined in PyShell.main.
             import PyShell

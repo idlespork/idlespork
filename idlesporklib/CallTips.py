@@ -34,8 +34,8 @@ class CallTips:
             return
         self.editwin = editwin
         self.text = editwin.text
-        self.calltip = None
         self._make_calltip_window = self._make_tk_calltip_window
+        self.calltip = None
 
     def close(self):
         self._make_calltip_window = None
@@ -43,11 +43,6 @@ class CallTips:
     def _make_tk_calltip_window(self):
         # See __init__ for usage
         return CallTipWindow.CallTip(self.text)
-
-    def _remove_calltip_window(self, event=None):
-        if self.calltip:
-            self.calltip.hidetip()
-            self.calltip = None
 
     def force_open_calltip_event(self, event):
         """
@@ -73,19 +68,21 @@ class CallTips:
             self.open_calltip(False)
 
     def open_calltip(self, evalfuncs):
-        self._remove_calltip_window()
-
         hp = HyperParser(self.editwin, "insert")
         sur_paren = hp.get_surrounding_brackets('(')
         if not sur_paren:
+            self.calltip.hidetip()
             return
         hp.set_index(sur_paren[0])
         expression = hp.get_expression()
         if not expression or (not evalfuncs and expression.find('(') != -1):
+            self.calltip.hidetip()
             return
         arg_text = self.fetch_tip(expression)
         if not arg_text:
+            self.calltip.hidetip()
             return
+
         self.calltip = self._make_calltip_window()
         self.calltip.showtip(arg_text, sur_paren[0], sur_paren[1])
 
@@ -119,6 +116,7 @@ class CallTips:
         except AttributeError:
             rpcclt = None
         if rpcclt:
+            # print(rpcclt.run_extension_function('CallTips', 'fetch_tip', (expression,), {}))
             return rpcclt.remotecall("exec", "get_the_calltip",
                                      (expression,), {})
         else:

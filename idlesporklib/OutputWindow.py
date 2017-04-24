@@ -56,11 +56,11 @@ class OutputWindow(EditorWindow):
     # Our own right-button menu
 
     rmenu_specs = [
-        ("Cut", "<<cut>>", "rmenu_check_cut"),
-        ("Copy", "<<copy>>", "rmenu_check_copy"),
-        ("Paste", "<<paste>>", "rmenu_check_paste"),
+        ("Cu_t", "<<cut>>", "rmenu_check_cut"),
+        ("Cop_y", "<<copy>>", "rmenu_check_copy"),
+        ("_Paste", "<<paste>>", "rmenu_check_paste"),
         (None, None, None),
-        ("Go to file/line", "<<goto-file-line>>", None),
+        ("_Go to file/line", "<<goto-file-line>>", None),
     ]
 
     file_line_pats = [

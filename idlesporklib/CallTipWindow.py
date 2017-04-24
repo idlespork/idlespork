@@ -9,19 +9,24 @@ HIDE_VIRTUAL_EVENT_NAME = "<<calltipwindow-hide>>"
 HIDE_SEQUENCES = ("<Key-Escape>", "<FocusOut>")
 CHECKHIDE_VIRTUAL_EVENT_NAME = "<<calltipwindow-checkhide>>"
 CHECKHIDE_SEQUENCES = ("<KeyRelease>", "<ButtonRelease>")
-CHECKHIDE_TIME = 100 # miliseconds
+CHECKHIDE_TIME = 100  # miliseconds
 
 MARK_RIGHT = "calltipwindowregion_right"
 
-class CallTip:
 
-    def __init__(self, widget):
+class CallTip(object):
+    _instance = None
+
+    def __init__(self, widget, hideOnCursorBack=True):
         self.widget = widget
         self.tipwindow = self.label = None
         self.parenline = self.parencol = None
         self.lastline = None
         self.hideid = self.checkhideid = None
         self.checkhide_after_id = None
+
+        # Flag to close window when cursor moves back
+        self.hideOnCursorBack = hideOnCursorBack
 
     def position_window(self):
         """Check if needs to reposition the window, and if so - do it."""
@@ -48,6 +53,10 @@ class CallTip:
         """Show the calltip, bind events which will close it and reposition it.
         """
         # Only called in CallTips, where lines are truncated
+        if self._instance is not None:
+            self._instance.hidetip()
+            self._instance = None
+
         self.text = text
         if self.tipwindow or not self.text:
             return
@@ -70,7 +79,7 @@ class CallTip:
             pass
         self.label = Label(tw, text=self.text, justify=LEFT,
                            background="#ffffe0", relief=SOLID, borderwidth=1,
-                           font = self.widget['font'])
+                           font=self.widget['font'])
         self.label.pack()
         tw.lift()  # work around bug in Tk 8.5.18+ (issue #24570)
 
@@ -84,6 +93,8 @@ class CallTip:
         for seq in HIDE_SEQUENCES:
             self.widget.event_add(HIDE_VIRTUAL_EVENT_NAME, seq)
 
+        self._instance = self
+
     def checkhide_event(self, event=None):
         if not self.tipwindow:
             # If the event was triggered by the same event that unbinded
@@ -91,9 +102,9 @@ class CallTip:
             # so do nothing in this case.
             return
         curline, curcol = map(int, self.widget.index("insert").split('.'))
-        if curline < self.parenline or \
-           (curline == self.parenline and curcol <= self.parencol) or \
-           self.widget.compare("insert", ">", MARK_RIGHT):
+        if (curline < self.parenline or
+                (self.hideOnCursorBack and (curline == self.parenline and curcol <= self.parencol) or
+                     self.widget.compare("insert", ">", MARK_RIGHT))):
             self.hidetip()
         else:
             self.position_window()
@@ -109,6 +120,7 @@ class CallTip:
         self.hidetip()
 
     def hidetip(self):
+        self._instance = None
         if not self.tipwindow:
             return
 
@@ -139,7 +151,7 @@ def _calltip_window(parent):  # htest #
     top = Toplevel(parent)
     top.title("Test calltips")
     top.geometry("200x100+%d+%d" % (parent.winfo_rootx() + 200,
-                  parent.winfo_rooty() + 150))
+                                    parent.winfo_rooty() + 150))
     text = Text(top)
     text.pack(side=LEFT, fill=BOTH, expand=1)
     text.insert("insert", "string.split")
@@ -148,14 +160,18 @@ def _calltip_window(parent):  # htest #
 
     def calltip_show(event):
         calltip.showtip("(s=Hello world)", "insert", "end")
+
     def calltip_hide(event):
         calltip.hidetip()
+
     text.event_add("<<calltip-show>>", "(")
     text.event_add("<<calltip-hide>>", ")")
     text.bind("<<calltip-show>>", calltip_show)
     text.bind("<<calltip-hide>>", calltip_hide)
     text.focus_set()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     from idlesporklib.idle_test.htest import run
+
     run(_calltip_window)

@@ -114,6 +114,9 @@ enable=1
 enable_editor=0
 enable_shell=1
 
+[ExpressionEvaluate]
+enable=True
+
 [Squeezer]
 enable=1
 max-num-of-lines=30
