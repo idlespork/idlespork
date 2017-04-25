@@ -3,7 +3,7 @@
 After ToolTip.py, which uses ideas gleaned from PySol
 Used by the CallTips IDLE extension.
 """
-from Tkinter import Toplevel, Label, LEFT, SOLID, TclError
+from Tkinter import Toplevel, Label, LEFT, SOLID, TclError, Frame, BOTH
 
 HIDE_VIRTUAL_EVENT_NAME = "<<calltipwindow-hide>>"
 HIDE_SEQUENCES = ("<Key-Escape>", "<FocusOut>")
@@ -15,6 +15,7 @@ MARK_RIGHT = "calltipwindowregion_right"
 
 
 class CallTip(object):
+    # Responsibility for ensuring single CallTip is CallTip's
     _instance = None
 
     def __init__(self, widget, hideOnCursorBack=True):
@@ -49,13 +50,16 @@ class CallTip(object):
         y = box[1] + box[3] + self.widget.winfo_rooty()
         self.tipwindow.wm_geometry("+%d+%d" % (x, y))
 
-    def showtip(self, text, parenleft, parenright):
-        """Show the calltip, bind events which will close it and reposition it.
+    def showtip(self, text, parenleft, parenright, *moretext):
+        """
+        Show the calltip, bind events which will close it and reposition it.
+
+        If moretext is given, additional labels are shown.
         """
         # Only called in CallTips, where lines are truncated
-        if self._instance is not None:
-            self._instance.hidetip()
-            self._instance = None
+        if CallTip._instance is not None:
+            CallTip._instance.hidetip()
+            CallTip._instance = None
 
         self.text = text
         if self.tipwindow or not self.text:
@@ -69,6 +73,9 @@ class CallTip(object):
         self.position_window()
         # remove border on calltip window
         tw.wm_overrideredirect(1)
+        # Need encompassing frame so extra labels are aligned to the left.
+        frame = Frame(tw)
+        frame.pack()
         try:
             # This command is only needed and available on Tk >= 8.4.0 for OSX
             # Without it, call tips intrude on the typing process by grabbing
@@ -77,10 +84,18 @@ class CallTip(object):
                        "help", "noActivates")
         except TclError:
             pass
-        self.label = Label(tw, text=self.text, justify=LEFT,
+        self.label = Label(frame, text=self.text, justify=LEFT,
                            background="#ffffe0", relief=SOLID, borderwidth=1,
                            font=self.widget['font'])
-        self.label.pack()
+        self.label.pack(anchor='w', side=LEFT, fill=BOTH)
+
+        # It's nice to have the option for more text.
+        for text in moretext:
+            label = Label(frame, text=text, justify=LEFT,
+                               background="#ffffe0", relief=SOLID, borderwidth=1,
+                               font=self.widget['font'])
+            label.pack(anchor='w', side=LEFT, fill=BOTH)
+
         tw.lift()  # work around bug in Tk 8.5.18+ (issue #24570)
 
         self.checkhideid = self.widget.bind(CHECKHIDE_VIRTUAL_EVENT_NAME,
@@ -93,7 +108,14 @@ class CallTip(object):
         for seq in HIDE_SEQUENCES:
             self.widget.event_add(HIDE_VIRTUAL_EVENT_NAME, seq)
 
-        self._instance = self
+        CallTip._instance = self
+
+    def safecompare(self):
+        # For unknown reasons sometimes this compare fails
+        try:
+            return self.widget.compare("insert", ">", MARK_RIGHT)
+        except:
+            return 1
 
     def checkhide_event(self, event=None):
         if not self.tipwindow:
@@ -102,10 +124,11 @@ class CallTip(object):
             # so do nothing in this case.
             return
         curline, curcol = map(int, self.widget.index("insert").split('.'))
-        if (curline < self.parenline or
-                (self.hideOnCursorBack and (curline == self.parenline and curcol <= self.parencol) or
-                     self.widget.compare("insert", ">", MARK_RIGHT))):
+        if (curline != self.parenline or
+                (self.hideOnCursorBack and ((curline == self.parenline and curcol <= self.parencol) or
+                                                self.safecompare()))):
             self.hidetip()
+
         else:
             self.position_window()
             if self.checkhide_after_id is not None:
@@ -120,7 +143,6 @@ class CallTip(object):
         self.hidetip()
 
     def hidetip(self):
-        self._instance = None
         if not self.tipwindow:
             return
 
@@ -140,6 +162,7 @@ class CallTip(object):
 
         self.widget.mark_unset(MARK_RIGHT)
         self.parenline = self.parencol = self.lastline = None
+        CallTip._instance = None
 
     def is_active(self):
         return bool(self.tipwindow)

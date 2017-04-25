@@ -304,7 +304,13 @@ class Squeezer:
         if not prev_ranges:
             return "break"
 
-        if not self.squeeze_range(*max(prev_ranges)):
+        # Get max element dynamically, in case the number of allowed tags to squeeze ever changes.
+        max_rng = prev_ranges[0]
+        for rng in prev_ranges[1:]:
+            if self.text.compare(max_rng[0][0], '<', rng[0][0]):
+                max_rng = rng
+
+        if not self.squeeze_range(*max_rng):
             self.text.bell()
         return "break"
         

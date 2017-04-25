@@ -1,7 +1,14 @@
 import __main__
 import sys
 
+import textwrap
 import CallTipWindow
+
+
+_MAX_TYPE_STRING_LEN = 20
+_MAX_COLS = 85
+_MAX_LINES = 5  # enough for bytes
+_INDENT = ' '*4  # for wrapped signatures
 
 
 def boundremotefunc(func):
@@ -50,7 +57,7 @@ class ExpressionEvaluate(object):
         if not text:
             return
         self.calltip = self._make_tk_calltip_window()
-        self.calltip.showtip(text, start, end)
+        self.calltip.showtip(text[0], start, end, *text[1:])
 
     @boundremotefunc
     def fetch_tip(self, expression):
@@ -64,15 +71,14 @@ class ExpressionEvaluate(object):
                     typ = '{}'.format(entity)
                 if typ.startswith("<type '") and typ.endswith("'>"):
                     typ = typ[len("<type '"):-2]
-                entity = '{}'.format(entity)
-                if len(typ) > 20 :
-                    typ = ''
-                if typ and typ not in entity:
-                    ret = "{%s}: %s" % (typ, entity)
+                entity = repr(entity)
+                if len(typ) > _MAX_TYPE_STRING_LEN or typ in entity:
+                    typ = None
+                if len(entity) > _MAX_COLS:
+                    entity = '\n'.join(textwrap.wrap(entity, _MAX_COLS, subsequent_indent=_INDENT)[:_MAX_LINES])
+                if typ:
+                    return typ, entity
                 else:
-                    ret = entity
-                if len(ret) > 85:
-                    ret = ret[:82] + '...'
-                return ret[:85]
+                    return entity,
             except BaseException as e:
-                return repr(e)
+                return repr(e),

@@ -203,8 +203,7 @@ class ColorDelegator(Delegator):
 
                 # Why would we color more than we're supposed to???
                 # In the case of recoloring an stdin area, called by expanding a squeezer, this is essential.
-                if tail.split('.')[0] < next.split('.')[0] or (tail.split('.')[0] == next.split('.')[0]
-                                                               and tail.split('.')[1] < next.split('.')[1]):
+                if self.compare(tail, '<=', next):
                     next = tail
 
                 lines_to_get = min(lines_to_get * 2, 100)
@@ -255,7 +254,8 @@ class ColorDelegator(Delegator):
                     # line.col string, not a true mark).  So leave a
                     # crumb telling the next invocation to resume here
                     # in case update tells us to leave.
-                    self.tag_add("TODO", next)
+                    # But only up to tail.
+                    self.tag_add("TODO", next, tail)
                 self.update()
                 if self.stop_colorizing:
                     if DEBUG: print "colorizing stopped"
