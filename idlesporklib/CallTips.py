@@ -75,11 +75,11 @@ class CallTips:
             return
         hp.set_index(sur_paren[0])
         expression = hp.get_expression()
-        if not expression or (not evalfuncs and expression.find('(') != -1):
+        if self.calltip and not expression or (not evalfuncs and expression.find('(') != -1):
             self.calltip.hidetip()
             return
         arg_text = self.fetch_tip(expression)
-        if not arg_text:
+        if self.calltip and not arg_text:
             self.calltip.hidetip()
             return
 

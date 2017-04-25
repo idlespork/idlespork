@@ -39,6 +39,8 @@ imports=False
 onlycontaining=False
 twotabstocomplete = True
 entertocomplete = False
+dictkeys=False
+showlengths=False
 [AutoComplete_cfgBindings]
 force-open-completions=<Control-Key-space>
 [AutoComplete_bindings]
@@ -115,7 +117,7 @@ enable_editor=0
 enable_shell=1
 
 [ExpressionEvaluate]
-enable=True
+enable=False
 
 [Squeezer]
 enable=1

@@ -10,12 +10,16 @@ import keyword
 import PyShell
 
 from configHandler import idleConf
+from CallTipWindow import CallTip
 
 # This string includes all chars that may be in a file name (without a path
 # separator)
+
 FILENAME_CHARS = string.ascii_letters + string.digits + os.curdir + "._~#$:-"
 # This string includes all chars that may be in an identifier
 ID_CHARS = string.ascii_letters + string.digits + "_"
+# Flag to show tool tip instead of completion window.
+SHOWCALLTIP = 'SHOWCALLTIP'
 
 # These constants represent the three different types of completions
 COMPLETE_ATTRIBUTES, COMPLETE_FILES, COMPLETE_KEYS = range(1, 3+1)
@@ -44,7 +48,12 @@ class AutoComplete:
 
         twotabstocomplete - sets if two tabs are required to complete text once window is open.
 
-        entertocomplete - sets if pressing enter completes a name."""
+        entertocomplete - sets if pressing enter completes a name.
+
+        dictkeys - if forced open is fired and cursor is just after '[', show window containing the dict keys.
+
+        showlengths - allows showing of lengths of lists and tuples.
+    """
 
     menudefs = [
         ('edit', [
@@ -70,6 +79,14 @@ class AutoComplete:
     # Flag to complete when enter is pressed.
     entertocomplete = idleConf.GetOption("extensions", "AutoComplete",
                                          "entertocomplete", type="bool", default=False, member_name='entertocomplete')
+
+    # Flag to show dictionary keys.
+    dictkeys = idleConf.GetOption("extensions", "AutoComplete",
+                                  "dictkeys", type="bool", default=False, member_name='dictkeys')
+
+    # Flag to allow showing length of lists and tuples.
+    showlengths = idleConf.GetOption("extensions", "AutoComplete",
+                                     "showlengths", type="bool", default=False, member_name='showlengths')
 
     def __init__(self, editwin=None):
         self.editwin = editwin
@@ -176,7 +193,7 @@ class AutoComplete:
         hp = HyperParser(self.editwin, "insert")
         curline = self.text.get("insert linestart", "insert")
         i = j = len(curline)
-        if hp.is_in_dict() and (not mode or mode==COMPLETE_KEYS) and evalfuncs:
+        if self.dictkeys and hp.is_in_dict() and (not mode or mode==COMPLETE_KEYS) and evalfuncs:
             self._remove_autocomplete_window()
             mode = COMPLETE_KEYS
             while i and curline[i - 1] in ID_CHARS + '"' + "'":
@@ -248,6 +265,12 @@ class AutoComplete:
             return
         comp_lists = self.fetch_completions(comp_what, mode)
         if not comp_lists[0]:
+            return
+
+        # It's nice to be able to see the length of a tuple/list (but not anything more complicated)
+        if comp_lists[0] == SHOWCALLTIP:
+            parenleft = self.text.index('insert-1c')
+            CallTip(self.text).showtip(comp_lists[1], parenleft, parenleft.split('.')[0] + '.end')
             return
 
         if mode == COMPLETE_ATTRIBUTES:
@@ -336,19 +359,31 @@ class AutoComplete:
                 except OSError:
                     return [], []
             elif mode == COMPLETE_KEYS:
+                entity = None
+                try:
+                    entity = self.get_entity(what)
+                    keys = set()
+                    for key in entity.keys():
+                        try:
+                            r = repr(key)
+                            if not r.startswith('<'):
+                                keys.add(r)
+                        except:
+                            pass
+                    smalll = bigl = sorted(keys)
+                except:
+                    # If the entity is a list or tuple let's show the length.
+                    # It is so common to go back to the start of the line, write "len(", go to the end, write ")",
+                    # evaluate, then remove the "len", and finally do what you actually wanted to do...
+                    # In any case, it's configurable.
                     try:
-                        entity = self.get_entity(what)
-                        keys = set()
-                        for key in entity.keys():
-                            try:
-                                r = repr(key)
-                                if not r.startswith('<'):
-                                    keys.add(r)
-                            except:
-                                pass
-                        smalll = bigl = sorted(keys)
+                        if isinstance(entity, list):
+                            return SHOWCALLTIP, 'list[0..%d]' % len(entity)
+                        elif isinstance(entity, tuple):
+                            return SHOWCALLTIP, 'tuple[0..%d]' % len(entity)
                     except:
-                        return [], []
+                        pass
+                    return [], []
 
             if not smalll:
                 smalll = bigl
