@@ -8,7 +8,7 @@ import CallTipWindow
 _MAX_TYPE_STRING_LEN = 20
 _MAX_COLS = 85
 _MAX_LINES = 5  # enough for bytes
-_INDENT = ' '*4  # for wrapped signatures
+_INDENT = ' '  # for wrapped signatures
 
 
 def boundremotefunc(func):
@@ -75,9 +75,14 @@ class ExpressionEvaluate(object):
                 if len(typ) > _MAX_TYPE_STRING_LEN or typ in entity:
                     typ = None
                 if len(entity) > _MAX_COLS:
-                    entity = '\n'.join(textwrap.wrap(entity, _MAX_COLS, subsequent_indent=_INDENT)[:_MAX_LINES])
+                    tmp_entity = '\n'.join(textwrap.wrap(entity[:_MAX_COLS * _MAX_LINES], _MAX_COLS,
+                                                         subsequent_indent=_INDENT)[:_MAX_LINES])
+                    if tmp_entity.replace('\n' + _INDENT, '') != entity:
+                        entity = tmp_entity[:-4] + ' ...'
+                    else:
+                        entity = tmp_entity
                 if typ:
-                    return typ, entity
+                    return '{%s}:' % typ, entity
                 else:
                     return entity,
             except BaseException as e:
