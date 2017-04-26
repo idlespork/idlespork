@@ -1368,10 +1368,13 @@ class ConfigDialog(Toplevel):
                 Entry(entry_area, textvariable=var
                       ).grid(row=row, column=1, sticky=NSEW, padx=7)
 
-        cls = idleConf.GetExtensionClass(ext_name)
-        if cls is not None:
+        try:
+            # Get extension class
+            cls = getattr(__import__(ext_name, globals(), locals(), []), ext_name, None)
             from MultiLineRun import MultiLineRun
             Message(bottom, text=MultiLineRun.dedent_text(cls.__doc__ or ''), width=240).pack(side=LEFT)
+        except:
+            pass
 
         return
 

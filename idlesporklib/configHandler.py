@@ -276,30 +276,13 @@ class IdleConf:
         else:
             member = self.extension_members[(configType, section, option)]
 
-        cls = self.GetExtensionClass(section)
-        if cls is not None:
+        # Get extension class and try to set static member
+        try:
+            cls = getattr(__import__(section, globals(), locals(), []), section, None)
             setattr(cls, member, value)
             return True
-        else:
-            return False
-
-    @staticmethod
-    def GetExtensionClass(section):
-        try:
-            # First we try using PyShell.flist, that should work, given that flist is defined in PyShell.main.
-            import PyShell
-            return PyShell.flist.pyshell.extensions[section]
         except:
-            try:
-                # But just in case the above didn't work, for who knows what reason, lets try importlib.
-                # Note that it was only added in python2.7.
-                import importlib
-                module = importlib.import_module('idlesporklib.' + section)
-                if module is not None:
-                    return getattr(module, section, None)
-            except:
-                return None
-
+            return False
 
     def SetOption(self, configType, section, option, value):
         """Set section option to value in user config file."""
