@@ -50,6 +50,7 @@ menudefs = [
    ('Find in Files...', '<<find-in-files>>'),
    ('R_eplace...', '<<replace>>'),
    ('Go to _Line', '<<goto-line>>'),
+   ('Show history panel', '<<history-window-toggle>>')
   ]),
 ('format', [
    ('_Indent Region', '<<indent-region>>'),
