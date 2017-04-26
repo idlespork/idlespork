@@ -109,7 +109,7 @@ enable=True
 zoom-height=<Alt-Key-2>
 
 [BetterOutput]
-enable=1
+enable=True
 
 [MultiLineRun]
 enable=1
@@ -118,9 +118,11 @@ enable_shell=1
 
 [ExpressionEvaluate]
 enable=False
+enableupdating=False
+updatedelay=1000
 
 [Squeezer]
-enable=1
+enable=True
 max-num-of-lines=30
 preview-command-posix=(xterm -e less %(fn)s; rm -f %(fn)s) &
 preview-command-win=notepad %(fn)s
@@ -133,7 +135,7 @@ expand-last-squeezed=<Control-Key-plus> <Control-Shift-Key-equal> <Control-Shift
 preview-last-squeezed=<Control-Key-minus>
 
 [BasicActions]
-enable=1
+enable=True
 [BasicActions_bindings]
 middle-clicked=<ButtonPress-2>
 middle-released=<ButtonRelease-2>

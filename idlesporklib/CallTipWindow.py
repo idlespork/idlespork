@@ -16,7 +16,7 @@ MARK_RIGHT = "calltipwindowregion_right"
 
 class CallTip(object):
     # Responsibility for ensuring single CallTip is CallTip's
-    _instance = None
+    instance = None
 
     def __init__(self, widget, hideOnCursorBack=True):
         self.widget = widget
@@ -57,9 +57,9 @@ class CallTip(object):
         If moretext is given, additional labels are shown.
         """
         # Only called in CallTips, where lines are truncated
-        if CallTip._instance is not None:
-            CallTip._instance.hidetip()
-            CallTip._instance = None
+        if CallTip.instance is not None:
+            CallTip.instance.hidetip()
+            CallTip.instance = None
 
         self.text = text
         if self.tipwindow or not self.text:
@@ -108,7 +108,7 @@ class CallTip(object):
         for seq in HIDE_SEQUENCES:
             self.widget.event_add(HIDE_VIRTUAL_EVENT_NAME, seq)
 
-        CallTip._instance = self
+        CallTip.instance = self
 
     def safecompare(self):
         # For unknown reasons sometimes this compare fails
@@ -162,7 +162,7 @@ class CallTip(object):
 
         self.widget.mark_unset(MARK_RIGHT)
         self.parenline = self.parencol = self.lastline = None
-        CallTip._instance = None
+        CallTip.instance = None
 
     def is_active(self):
         return bool(self.tipwindow)
