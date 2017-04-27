@@ -7,26 +7,12 @@ import textwrap
 
 import CallTipWindow
 from configHandler import idleConf
-from idlesporklib.EnablableExtension import EnablableExtension
+from idlesporklib.EnablableExtension import EnablableExtension, boundremotefunc
 
 _MAX_TYPE_STRING_LEN = 20
 _MAX_COLS = 85
 _MAX_LINES = 5  # enough for bytes
 _INDENT = ' '  # for wrapped signatures
-
-
-def boundremotefunc(func):
-    def new_func(self, *args, **kwargs):
-        try:
-            rpcclt = self.editwin.flist.pyshell.interp.rpcclt
-        except AttributeError:
-            rpcclt = None
-
-        if rpcclt:
-            return rpcclt.run_extension_function(self.__class__.__name__, func.__name__, args, kwargs)
-        else:
-            return func(self, *args, **kwargs)
-    return new_func
 
 
 class ExpressionEvaluate(EnablableExtension):
@@ -40,14 +26,17 @@ class ExpressionEvaluate(EnablableExtension):
     updatedelay = idleConf.GetOption("extensions", "ExpressionEvaluate",
                                      "updatedelay", type="int", default=1000, member_name='updatedelay')
 
+    rmenu_spec = ("_Evaluate expression", "<<evaluate-expression>>", 'rmenu_check_copy')
+
     def __init__(self, editwin=None):
         if editwin is not None:
             self.text = text = editwin.text
             self.editwin = editwin
             self.calltip = None
-            self.editwin.rmenu_specs.append(("_Evaluate expression", "<<evaluate-expression>>", 'rmenu_check_copy'))
-            # Invalidate right click menu so it gets built again.
-            self.editwin.rmenu = None
+            # If we're not in the right click menu, invalidate it so it gets built again.
+            if ExpressionEvaluate.rmenu_spec not in self.editwin.rmenu_specs:
+                self.editwin.rmenu_specs.append(ExpressionEvaluate.rmenu_spec)
+                self.editwin.rmenu = None
 
             self.eval_bindid = self.text.bind("<<evaluate-expression>>", self.evaluate_expression)
 

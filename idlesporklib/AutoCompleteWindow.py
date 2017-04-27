@@ -25,6 +25,8 @@ WINCONFIG_SEQUENCE = "<Configure>"
 DOUBLECLICK_SEQUENCE = "<B1-Double-ButtonRelease>"
 
 class AutoCompleteWindow:
+    # Save global instance to make sure there is always at most one window.
+    instance = None
 
     def __init__(self, widget, twotabstocomplete=True, entertocomplete=False):
         # The widget (Text) on which we place the AutoCompleteWindow
@@ -180,6 +182,12 @@ class AutoCompleteWindow:
         """Show the autocomplete list, bind events.
         If complete is True, complete the text, and if there is exactly one
         matching completion, don't open a list."""
+
+        # If there's still a window showing quickly hide it.
+        if AutoCompleteWindow.instance is not None:
+            AutoCompleteWindow.instance.hide_window()
+            AutoCompleteWindow.instance = None
+
         self.onlycontaining = onlycontaining
         # Handle the start we already have
         self.completions, self.morecompletions = comp_lists
@@ -246,6 +254,8 @@ class AutoCompleteWindow:
         self.winconfigid = acw.bind(WINCONFIG_SEQUENCE, self.winconfig_event)
         self.doubleclickid = listbox.bind(DOUBLECLICK_SEQUENCE,
                                           self.doubleclick_event)
+
+        AutoCompleteWindow.instance = self
 
     def winconfig_event(self, event):
         if not self.is_active():
@@ -442,3 +452,5 @@ class AutoCompleteWindow:
         self.listbox = None
         self.autocompletewindow.destroy()
         self.autocompletewindow = None
+
+        AutoCompleteWindow.instance = None

@@ -36,6 +36,7 @@
 enable=True
 popupwait=2000
 imports=False
+imports-timeout=2
 onlycontaining=False
 twotabstocomplete = True
 entertocomplete = False

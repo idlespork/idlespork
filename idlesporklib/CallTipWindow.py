@@ -56,7 +56,6 @@ class CallTip(object):
 
         If moretext is given, additional labels are shown.
         """
-        # Only called in CallTips, where lines are truncated
         if CallTip.instance is not None:
             CallTip.instance.hidetip()
             CallTip.instance = None
