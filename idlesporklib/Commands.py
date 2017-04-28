@@ -224,6 +224,8 @@ def get_code(x):
         try:
             source =  inspect.getsource(x)
             filename = inspect.getfile(x)
+            if filename.endswith('.pyc'):
+                filename = filename[:-1]
             lineno = inspect.findsource(x)[1] + 1
 
             # Create a link to the position
