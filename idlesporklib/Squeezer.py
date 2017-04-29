@@ -8,7 +8,6 @@ Squeezer - using this extension will make long texts become a small button.
 import re
 from PyShell import PyShell
 from configHandler import idleConf
-import Links
 import Tkinter
 import tkFont
 import os
@@ -72,20 +71,44 @@ def _countlines(s, linewidth=_LINEWIDTH, tabwidth=_TABWIDTH):
     return linecount
 
 
+def tags_in_range(text, start, end):
+    """Helper function to get all the tags between two indexes"""
+    tags = []
+    start = text.index(start)
+    names = text.tag_names()
+
+    for name in names:
+        rng = text.tag_prevrange(name, end)
+        while rng:
+            i0, i1 = rng
+            if text.compare(i0, '<', start):
+                i0 = start
+            if text.compare(end, '<', i1):
+                i1 = end
+            if text.compare(i1, '<=', i0):
+                break
+            tags.append((name, len(text.get(start, i0)), len(text.get(i0, i1))))
+            newrng = text.tag_prevrange(name, i0)
+            if rng == newrng:
+                break
+            rng = newrng
+
+    return tags
+
+
 # define the extension's classes
 
 class ExpandingButton(Tkinter.Button):
-    def __init__(self, s, tags, numoflines, squeezer, def_line=None):
+    def __init__(self, s, tags, numoflines, squeezer, def_line=None, rangetags=()):
+        self.s = s
         self.tags = tags
         self.squeezer = squeezer
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
+        self.rangetags = rangetags
 
         # If this is for a stdin area, we should remember the line just before so it will appear in preview and copy.
         self.def_line = def_line
-
-        # This makes sure links are preserved after squeezing and expanding
-        self.s = Links.replace_addresses(editwin, s)
         
         Tkinter.Button.__init__(self, text,
                                 text=self.get_caption(numoflines),
@@ -122,22 +145,12 @@ class ExpandingButton(Tkinter.Button):
         rem_txt = self.s[Squeezer._MAX_EXPAND:]
 
         basetext = _get_base_text(self.editwin)
+        start = self.text.index(self)
+        basetext.insert(start, expanded_txt, self.tags)
 
-        # If it's stdin that we're expanding, we'll have to recolor it.
-        if self.tags == 'stdin':
-            ind = self.text.index(self)
-            # Recolor only works on areas tagged with TO-DO.
-            basetext.insert(ind, expanded_txt, 'TODO')
-            self.editwin.color.recolorize(False)
-            # In order to be able to squeeze again, we must set the tag stdin.
-
-            basetext.tag_add('stdin', ind, '%s +%dc' % (ind, len(expanded_txt)))
-        else:
-            basetext.insert(self.text.index(self), expanded_txt, self.tags)
-
-        # Convert txt links into actual links
-        Links.parse(basetext, "%d.0" % (int(self.text.index(self).split('.')[0]) - len(expanded_txt.split('\n'))),
-                    self.text.index(self))
+        if self.rangetags:
+            for name, i0, i1, in self.rangetags:
+                basetext.tag_add(name, start + '+%dc' % i0, start + '+%dc+%dc' % (i0, i1))
 
         if len(rem_txt) == 0:
             basetext.delete(self)
@@ -151,7 +164,7 @@ class ExpandingButton(Tkinter.Button):
         if self.tags == 'stdin':
             return self.def_line + '\n' + self.s
         else:
-            return Links.replace_links(self.s)
+            return self.s
         
     def copy(self, event):
         self.clipboard_clear()
@@ -357,6 +370,9 @@ class Squeezer:
         if s and s[-1] == '\n':
             end = self.text.index("%s-1c" % end)
             s = s[:-1]
+
+        # This will preserve all tags, such as for colors and links
+        rangetags = tags_in_range(self.text, start, end)
         # delete the text
         _get_base_text(self.editwin).delete(start, end)
 
@@ -367,7 +383,7 @@ class Squeezer:
 
         # prepare an ExpandingButton
         numoflines = self.count_lines(s)
-        expandingbutton = ExpandingButton(s, tag_name, numoflines, self, def_line=def_line)
+        expandingbutton = ExpandingButton(s, tag_name, numoflines, self, def_line=def_line, rangetags=rangetags)
         # insert the ExpandingButton to the Text
         self.text.window_create(start, window=expandingbutton,
                                 padx=3, pady=5)

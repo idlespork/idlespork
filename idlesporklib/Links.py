@@ -1,10 +1,7 @@
-import re
 from Tkinter import SEL, INSERT
-
 
 PREFIX = '{{{IDLESPORK_LINK:'
 SUFFIX = '}}}'
-FILE_PATTERN = r"File \"([^\"]*)\", line ([0-9]*)"
 
 class Link(object):
     def __str__(self):
@@ -86,51 +83,6 @@ def create_link_local(link):
 def create_link(link):
     import sporktools
     return sporktools._World.interp.create_link(link)
-
-def replace_addresses(gui, txt):
-    """Replaces file addresses in txt by links"""
-    ret = []
-    m = re.search(FILE_PATTERN, txt)
-    while m:
-        ret.append(txt[:m.start()])
-        filename, lineno = m.group(1), int(m.group(2))
-        # We don't want to replace existing links
-        if not filename.startswith(PREFIX) or not filename.endswith(SUFFIX):
-            if filename.startswith("<pyshell#") and filename.endswith('>'):
-                link = create_link_local(GotoMarkLink(gui, filename, filename[1:-1], lineno))
-            else:
-                link = create_link_local(FileLink(gui, filename, filename, lineno))
-            ret.append('File "%s", line %d' % (link, lineno))
-        else:
-            ret.append(m.group(0))
-        txt = txt[m.end():]
-        m = re.search(FILE_PATTERN, txt)
-    ret.append(txt)
-    return ''.join(ret)
-
-def replace_links(txt):
-    # Replace links text with the real addresses.
-    # This is utilised by Squeezer when asked to open "less" or copy squeezed text,
-    # since we don't want to see "{{{IDLESPORK_LINK:0}}}" in our text.
-    # Furthermore, if txt is the output of "??", w
-    match = re.match(r"^File \"([^\"]*)\", line ([0-9]*):\n", txt)
-    if match:
-        txt = txt[match.end():]
-
-    ret = []
-    m = re.search('\"{}([0-9]*){}\"'.format(PREFIX, SUFFIX), txt)
-    while m:
-        ret.append(txt[:m.start()])
-        ind = int(m.group(1))
-        if 0 <= ind < len(links):
-            ret.append('"{}"'.format(links[ind].txt))
-        else:
-            ret.append(m.group(0))
-        txt = txt[m.end():]
-        m = re.search('\"{}([0-9]*)\"'.format(PREFIX, SUFFIX), txt)
-    ret.append(txt)
-    return ''.join(ret)
-
 
 def parse(text, begin, end):
     begin = text.index(begin)
