@@ -138,7 +138,7 @@ class MultiLineRun(object):
         self.mld.paste = True
         self.text.insert('end', code, 'TODO')
         self.text.tag_remove('sel', "1.0", 'end')
-        self.editwin.color.recolorize(False)
+        self.editwin.color.recolorize()
         self.text.tag_add('stdin', 'iomark', 'end')
 
         mark = 'pyshell#%d' % self.editwin.interp.gid
