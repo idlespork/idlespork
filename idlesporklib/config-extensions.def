@@ -122,6 +122,10 @@ enable=False
 enableupdating=False
 updatedelay=1000
 
+[OutHist]
+enable=False
+histsize=10
+
 [Squeezer]
 enable=True
 max-num-of-lines=30
