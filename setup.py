@@ -19,7 +19,7 @@ except ImportError:
     build_msi = None
 
 setup(name='idlespork',
-      version='0.1.2',
+      version='0.1.3',
       description='idlespork is an improved version of IDLE',
       long_description=long_description,
       packages=['idlesporklib'],
@@ -28,7 +28,7 @@ setup(name='idlespork',
            'idlespork.bat']},
       scripts=['bin/idlespork'],
       url='https://github.com/idlespork/idlespork',
-      download_url='https://github.com/idlespork/idlespork/tarball/0.1.2',
+      download_url='https://github.com/idlespork/idlespork/tarball/0.1.3',
       keywords=['IDLE', 'background', 'jobs'],
       author='Alon Titelman, Lior Goldberg',
       author_email='alon.ti@gmail.com, goldberg.lior@gmail.com',
