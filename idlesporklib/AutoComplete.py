@@ -9,19 +9,25 @@ import string
 import keyword
 import PyShell
 
-from idlesporklib.configHandler import idleConf
+from configHandler import idleConf
+from CallTipWindow import CallTip
+from idlesporklib.ModuleCompletion import ModuleCompletion
+from idlesporklib.EnablableExtension import boundremotefunc
 
 # This string includes all chars that may be in a file name (without a path
 # separator)
+
 FILENAME_CHARS = string.ascii_letters + string.digits + os.curdir + "._~#$:-"
 # This string includes all chars that may be in an identifier
 ID_CHARS = string.ascii_letters + string.digits + "_"
+# Flag to show tool tip instead of completion window.
+SHOWCALLTIP = 'SHOWCALLTIP'
 
 # These constants represent the three different types of completions
 COMPLETE_ATTRIBUTES, COMPLETE_FILES, COMPLETE_KEYS = range(1, 3+1)
 
-from idlesporklib import AutoCompleteWindow
-from idlesporklib.HyperParser import HyperParser
+import AutoCompleteWindow
+from HyperParser import HyperParser
 
 import __main__
 
@@ -30,6 +36,28 @@ if os.altsep:  # e.g. '/' on Windows...
     SEPS += os.altsep
 
 class AutoComplete:
+    """
+    Extension to allow automatic completion of text.
+
+    Set the autocomplete and try-open-completions key bindings.
+    Options:
+        popupwait - how many millisecs to wait before opening window.
+
+        onlycontaining - if True, the autocomplete window will first only show names that contain the typed text.
+    If you double press the key for autocomplete, the list of names will grow to include all names.
+
+        imports - if True, names available for import statements will be completed too.
+
+        imports-timeout - (proximal) maximum delay until import completion returns.
+
+        twotabstocomplete - sets if two tabs are required to complete text once window is open.
+
+        entertocomplete - sets if pressing enter completes a name.
+
+        dictkeys - if forced open is fired and cursor is just after '[', show window containing the dict keys.
+
+        showlengths - allows showing of lengths of lists and tuples.
+    """
 
     menudefs = [
         ('edit', [
@@ -42,11 +70,27 @@ class AutoComplete:
 
     # Flag to show only completions that actually contain typed word.
     onlycontaining = idleConf.GetOption("extensions", "AutoComplete",
-                                        "onlycontaining", type="bool", default=False)
+                                        "onlycontaining", type="bool", default=False, member_name='onlycontaining')
 
     # Flag to auto complete imports.
     imports = idleConf.GetOption("extensions", "AutoComplete",
-                                 "imports", type="bool", default=False)
+                                 "imports", type="bool", default=False, member_name='imports')
+
+    # Flag to complete after two tabs.
+    twotabstocomplete = idleConf.GetOption("extensions", "AutoComplete",
+                                           "twotabstocomplete", type="bool", default=True, member_name='twotabstocomplete')
+
+    # Flag to complete when enter is pressed.
+    entertocomplete = idleConf.GetOption("extensions", "AutoComplete",
+                                         "entertocomplete", type="bool", default=False, member_name='entertocomplete')
+
+    # Flag to show dictionary keys.
+    dictkeys = idleConf.GetOption("extensions", "AutoComplete",
+                                  "dictkeys", type="bool", default=False, member_name='dictkeys')
+
+    # Flag to allow showing length of lists and tuples.
+    showlengths = idleConf.GetOption("extensions", "AutoComplete",
+                                     "showlengths", type="bool", default=False, member_name='showlengths')
 
     def __init__(self, editwin=None):
         self.editwin = editwin
@@ -62,7 +106,7 @@ class AutoComplete:
         self._delayed_completion_index = None
 
     def _make_autocomplete_window(self):
-        return AutoCompleteWindow.AutoCompleteWindow(self.text)
+        return AutoCompleteWindow.AutoCompleteWindow(self.text, self.twotabstocomplete, self.entertocomplete)
 
     def _remove_autocomplete_window(self, event=None):
         if self.autocompletewindow:
@@ -74,7 +118,8 @@ class AutoComplete:
             self.editwin.executing
 
     def force_open_completions_event(self, event):
-        """Happens when the user really wants to open a completion list, even
+        """
+        Happens when the user really wants to open a completion list, even
         if a function call is needed.
         """
         if self.is_executing():
@@ -82,7 +127,8 @@ class AutoComplete:
         self.open_completions(True, False, True)
 
     def try_open_completions_event(self, event):
-        """Happens when it would be nice to open a completion list, but not
+        """
+        Happens when it would be nice to open a completion list, but not
         really necessary, for example after an dot, so function
         calls won't be made.
         """
@@ -99,7 +145,8 @@ class AutoComplete:
                                          COMPLETE_FILES)
 
     def autocomplete_event(self, event):
-        """Happens when the user wants to complete his word, and if necessary,
+        """
+        Happens when the user wants to complete his word, and if necessary,
         open a completion list after that (if there is more than one
         completion)
         """
@@ -150,7 +197,18 @@ class AutoComplete:
         hp = HyperParser(self.editwin, "insert")
         curline = self.text.get("insert linestart", "insert")
         i = j = len(curline)
-        if hp.is_in_dict() and (not mode or mode==COMPLETE_KEYS) and evalfuncs:
+
+        # Check if it's an import statement.
+        # This is seperated from the rest since the pattern check is in ModuleCompletion.
+        imports = self.get_module_completion(curline)
+        if imports:
+            if imports == ([], []):
+                return
+            comp_lists = imports
+            while i and curline[i - 1] in ID_CHARS:
+                i -= 1
+            comp_start = curline[i:j]
+        elif self.dictkeys and hp.is_in_dict() and (not mode or mode==COMPLETE_KEYS) and evalfuncs:
             self._remove_autocomplete_window()
             mode = COMPLETE_KEYS
             while i and curline[i - 1] in ID_CHARS + '"' + "'":
@@ -180,51 +238,32 @@ class AutoComplete:
                 i -= 1
             comp_start = curline[i:j]
             if i and curline[i-1] == '.':
-                done = False
-                # Check if import completion is enabled.
-                if self.imports:
-                    import re
-                    # Try to match an import statement.
-                    match = re.search('import (.*)$', curline[:i-1])
-                    if match is not None:
-                        # Only complete if evalfuncs is on - since this evals an import.
-                        if not evalfuncs:
-                            return
-                        comp_what = 'import ' + match.group(1)
-                        done = True
-
-                if not done:
-                    hp.set_index("insert-%dc" % (len(curline)-(i-1)))
-                    comp_what = hp.get_expression()
+                hp.set_index("insert-%dc" % (len(curline)-(i-1)))
+                comp_what = hp.get_expression()
 
                 if not comp_what or \
                    (not evalfuncs and comp_what.find('(') != -1):
                     return
-            # Check if we're completing imports and there's a space before last name.
-            elif self.imports and i and curline[i-1] == ' ':
-                import re
-                # Try to match a from-import statement.
-                match = re.search('from (.*) import $', curline[:i])
-                if match is not None:
-                    # Only complete if evalfuncs is on.
-                    if not evalfuncs:
-                        return
-                    # Convert to short import for get_entity.
-                    comp_what = 'import ' + match.group(1)
-                else:
-                    comp_what = ''
             else:
                 comp_what = ""
         else:
             return
 
-        if complete and not comp_what and not comp_start:
-            return
-        comp_lists = self.fetch_completions(comp_what, mode)
-        if not comp_lists[0]:
+        # For everything but imports, call fetch_completions
+        if not imports:
+            if complete and not comp_what and not comp_start:
+                return
+            comp_lists = self.fetch_completions(comp_what, mode)
+            if not comp_lists[0]:
+                return
+
+        # It's nice to be able to see the length of a tuple/list (but not anything more complicated)
+        if comp_lists[0] == SHOWCALLTIP:
+            parenleft = self.text.index('insert-1c')
+            CallTip(self.text).showtip(comp_lists[1], parenleft, parenleft.split('.')[0] + '.end')
             return
 
-        if mode == COMPLETE_ATTRIBUTES:
+        if mode == COMPLETE_ATTRIBUTES and not imports:
             calltips = self.editwin.extensions.get('CallTips')
             if calltips:
                 args = calltips.arg_names(evalfuncs)
@@ -234,11 +273,13 @@ class AutoComplete:
 
         # Check if we want to show only completion containing typed word.
         if self.onlycontaining:
+            # Small optimization
+            comp_lower = comp_start.lower()
             # Find such completions.
-            comp_lists = [name for name in comp_lists[0] if comp_start.lower() in name.lower()], comp_lists[1]
+            comp_lists = [name for name in comp_lists[0] if comp_lower in name.lower()], comp_lists[1]
             # If none were found, look in big list.
             if not comp_lists[0]:
-                comp_lists = [name for name in comp_lists[1] if comp_start.lower() in name.lower()], comp_lists[1]
+                comp_lists = [name for name in comp_lists[1] if comp_lower in name.lower()], comp_lists[1]
             # If still none were found, just return the big list - which is the default anyway.
             if not comp_lists[0]:
                 comp_lists = comp_lists[1], comp_lists[1]
@@ -310,19 +351,31 @@ class AutoComplete:
                 except OSError:
                     return [], []
             elif mode == COMPLETE_KEYS:
+                entity = None
+                try:
+                    entity = self.get_entity(what)
+                    keys = set()
+                    for key in entity.keys():
+                        try:
+                            r = repr(key)
+                            if not r.startswith('<'):
+                                keys.add(r)
+                        except:
+                            pass
+                    smalll = bigl = sorted(keys)
+                except:
+                    # If the entity is a list or tuple let's show the length.
+                    # It is so common to go back to the start of the line, write "len(", go to the end, write ")",
+                    # evaluate, then remove the "len", and finally do what you actually wanted to do...
+                    # In any case, it's configurable.
                     try:
-                        entity = self.get_entity(what)
-                        keys = set()
-                        for key in entity.keys():
-                            try:
-                                r = repr(key)
-                                if not r.startswith('<'):
-                                    keys.add(r)
-                            except:
-                                pass
-                        smalll = bigl = sorted(keys)
+                        if isinstance(entity, list):
+                            return SHOWCALLTIP, 'list[0..%d]' % len(entity)
+                        elif isinstance(entity, tuple):
+                            return SHOWCALLTIP, 'tuple[0..%d]' % len(entity)
                     except:
-                        return [], []
+                        pass
+                    return [], []
 
             if not smalll:
                 smalll = bigl
@@ -330,21 +383,14 @@ class AutoComplete:
 
     def get_entity(self, name):
         """Lookup name in a namespace spanning sys.modules and __main.dict__ or import module"""
-
-        # Check if we're completing imports and the entity is an import statement.
-        if self.imports and name.startswith('import '):
-            # importlib was added in Python 2.7.
-            try:
-                import importlib
-            except ImportError:
-                importlib = None
-            if importlib is not None:
-                # Import the module and return it.
-                return importlib.import_module(name[len('import '):])
-
         namespace = sys.modules.copy()
         namespace.update(__main__.__dict__)
         return eval(name, namespace)
+
+    @boundremotefunc
+    def get_module_completion(self, line):
+        """Get module completions for the line"""
+        return ModuleCompletion.module_completion(line)
 
 
 if __name__ == '__main__':

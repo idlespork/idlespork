@@ -11,7 +11,7 @@ Refer to comments in EditorWindow autoindent code for details.
 """
 from Tkinter import Toplevel, Frame, Button, StringVar, BooleanVar, IntVar, \
                     LabelFrame, Listbox, Scrollbar, Checkbutton, Label, \
-                    Scale, Text, Radiobutton, Entry, Canvas
+                    Scale, Text, Radiobutton, Entry, Canvas, Message
 from Tkinter import TRUE, FALSE, TOP, BOTTOM, BOTH, LEFT, RIGHT, GROOVE, SOLID, \
                     X, Y, W, NONE, END, DISABLED, E, HORIZONTAL, NSEW, NS, EW, \
                     NORMAL, ANCHOR, NW, VERTICAL
@@ -361,6 +361,11 @@ class ConfigDialog(Toplevel):
         frameKeySets.pack(side=BOTTOM, padx=5, pady=5, fill=BOTH)
         #frameCustom
         self.buttonNewKeys.pack(side=BOTTOM, fill=X, padx=5, pady=5)
+
+        # Message widget for docstring of event.
+        self.keyDoc = Message(frameCustom, text='')
+        self.keyDoc.pack(side=BOTTOM, fill=X, padx=5, pady=5)
+
         frameTarget.pack(side=LEFT, padx=5, pady=5, expand=TRUE, fill=BOTH)
         #frame target
         frameTarget.columnconfigure(0, weight=1)
@@ -706,6 +711,20 @@ class ConfigDialog(Toplevel):
             self.CreateNewKeySet(newKeysName)
 
     def KeyBindingSelected(self, event):
+        # Show docstring for event.
+        try:
+            import MultiCall
+            eventname = event.widget.get(int(event.widget.curselection()[0])).split(' - ')[0]
+            docstring = MultiCall.bound_events.get(eventname).__doc__
+            if docstring:
+                from MultiLineRun import MultiLineRun
+                self.keyDoc.configure(text=MultiLineRun.dedent_text(docstring).strip())
+                self.keyDoc.configure(width=self.buttonNewKeys.winfo_width())
+            else:
+                self.keyDoc.configure(text='')
+        except:
+            self.keyDoc.configure(text='')
+
         self.buttonNewKeys.config(state=NORMAL)
 
     def CreateNewKeySet(self, newKeySetName):
@@ -1319,9 +1338,16 @@ class ConfigDialog(Toplevel):
 
     def create_extension_frame(self, ext_name):
         """Create a frame holding the widgets to configure one extension"""
-        f = VerticalScrolledFrame(self.details_frame, height=250, width=250)
+        f = VerticalScrolledFrame(self.details_frame, width=250)
         self.config_frame[ext_name] = f
-        entry_area = f.interior
+
+        top = Frame(f.interior)
+        bottom = Frame(f.interior)
+        top.pack(side='top', fill='x', expand=False)
+        bottom.pack(side='bottom', fill='both', expand=True)
+
+        entry_area = top
+        row = 0
         # create an entry for each configuration option
         for row, opt in enumerate(self.extensions[ext_name]):
             # create a row with a label and entry/checkbutton
@@ -1341,6 +1367,15 @@ class ConfigDialog(Toplevel):
             else:
                 Entry(entry_area, textvariable=var
                       ).grid(row=row, column=1, sticky=NSEW, padx=7)
+
+        try:
+            # Get extension class
+            cls = getattr(__import__(ext_name, globals(), locals(), []), ext_name, None)
+            from MultiLineRun import MultiLineRun
+            Message(bottom, text=MultiLineRun.dedent_text(cls.__doc__ or ''), width=240).pack(side=LEFT)
+        except:
+            pass
+
         return
 
     def set_extension_value(self, section, opt):
@@ -1358,13 +1393,32 @@ class ConfigDialog(Toplevel):
     def save_all_changed_extensions(self):
         """Save configuration changes to the user config file."""
         has_changes = False
+        req_restart = []
+        noreq_restart = []
         for ext_name in self.extensions:
             options = self.extensions[ext_name]
             for opt in options:
                 if self.set_extension_value(ext_name, opt):
                     has_changes = True
+                    # Try to set the extension option right now.
+                    if idleConf.SetExtensionOption('extensions', ext_name, opt['name'],
+                                                 idleConf.GetOption('extensions', ext_name, opt['name'],
+                                                                    opt['default'], opt['type'])):
+                        noreq_restart.append((ext_name, opt['name']))
+                    else:
+                        req_restart.append((ext_name, opt['name']))
         if has_changes:
             self.ext_userCfg.Save()
+
+            msg = ""
+            if noreq_restart:
+                msg += "The following settings do not require restart:" \
+                       "\n{}\n".format('\n'.join('{}.{}'.format(ext, opt) for ext, opt in noreq_restart))
+            if req_restart:
+                msg += "The following settings require restart:" \
+                       "\n{}\n".format('\n'.join('{}.{}'.format(ext, opt) for ext, opt in req_restart))
+
+            tkMessageBox.showinfo("Applied settings", msg, parent=self)
 
 
 help_common = '''\

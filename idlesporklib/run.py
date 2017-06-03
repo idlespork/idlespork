@@ -680,6 +680,7 @@ class Executive(object):
         self.locals = __main__.__dict__
         self.calltip = CallTips.CallTips()
         self.autocomplete = AutoComplete.AutoComplete()
+        self.extensions = {'CallTips': self.calltip, 'AutoComplete': self.autocomplete}
 
     def runcode(self, code, source = None, filename = None):
         global interruptable
@@ -756,6 +757,22 @@ class Executive(object):
 
     def get_the_completion_list(self, what, mode):
         return self.autocomplete.fetch_completions(what, mode)
+
+    def run_extension_function(self, __run_extension_function__ext_name, __run_extension_function__func_name,
+                               *args, **kwargs):
+        """Helper function for remote calls from extensions"""
+        ext_name, func_name = __run_extension_function__ext_name, __run_extension_function__func_name
+        try:
+            inst = self.extensions.get(ext_name)
+            if inst is None:
+                from configHandler import IdleConf
+                # Get extension class, instantiate, and call function.
+                cls = getattr(__import__(ext_name, globals(), locals(), []), ext_name, None)
+                self.extensions[ext_name] = inst = cls()
+            return getattr(inst, func_name)(*args, **kwargs)
+        except Exception as e:
+            return e
+
 
     def get_the_prompt(self):
         try:

@@ -1,4 +1,4 @@
-class Delegator:
+class Delegator(object):
 
     # The cache is only used to be able to change delegates!
 

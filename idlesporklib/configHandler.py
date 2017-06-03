@@ -161,7 +161,7 @@ class IdleConf:
         self.cfg = {}  # TODO use to select userCfg vs defaultCfg
         self.CreateConfigHandlers()
         self.LoadCfgFiles()
-
+        self.extension_members = {}
 
     def CreateConfigHandlers(self):
         "Populate default and user config parser dictionaries."
@@ -216,7 +216,7 @@ class IdleConf:
         # TODO continue without userDIr instead of exit
         return userDir
 
-    def GetOption(self, configType, section, option, default=None, type=None,
+    def _GetOption(self, configType, section, option, default=None, type=None,
                   warn_on_default=True, raw=False):
         """Return a value for configType section option, or default.
 
@@ -258,6 +258,31 @@ class IdleConf:
             except IOError:
                 pass
         return default
+
+    def GetOption(self, configType, section, option, default=None, type=None,
+                  warn_on_default=True, raw=False, member_name=None):
+        res = self._GetOption(configType, section, option, default=default, type=type,
+                              warn_on_default=warn_on_default, raw=raw)
+        if member_name:
+            # Remember the extension member corresponding to this option.
+            self.extension_members[(configType, section, option)] = member_name
+        return res
+
+    def SetExtensionOption(self, configType, section, option, value):
+        # If we know the name of the extension class member corresponding to the option,
+        # we can set right now without requiring a restart.
+        if (configType, section, option) not in self.extension_members:
+            return False
+        else:
+            member = self.extension_members[(configType, section, option)]
+
+        # Get extension class and try to set static member
+        try:
+            cls = getattr(__import__(section, globals(), locals(), []), section, None)
+            setattr(cls, member, value)
+            return True
+        except:
+            return False
 
     def SetOption(self, configType, section, option, value):
         """Set section option to value in user config file."""

@@ -32,12 +32,14 @@ class GotoMarkLink(Link):
 
     def after_sometime(self):
         self.gui.text.selection_clear()
+
+        # If squeezing code is allowed, we have to check if the mark is in a squeezer.
         sq = self.gui.extensions["Squeezer"]
-        if sq is not None:
-            for c in sq.expandingbuttons_code:
-                if self.mark in c.shell_marks:
-                    c.expand(None)
-                    break
+        if sq is not None and sq._SQUEEZE_CODE:
+            # Squeezed code is always one line under the mark.
+            button = sq.find_button(self.gui.text.index(self.mark + ' + 1 line linestart'))
+            if button is not None:
+                button.expand(None)
 
         if self.line != 1:
             m = self.mark + " + %d lines linestart" % (self.line - 1)

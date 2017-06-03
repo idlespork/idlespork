@@ -16,6 +16,11 @@ from idlesporklib.HyperParser import HyperParser
 
 
 class CallTips:
+    """
+    Extension that shows tips for function calls
+
+    Configure the force-open-calltip key binding.
+    """
 
     menudefs = [
         ('edit', [
@@ -29,8 +34,8 @@ class CallTips:
             return
         self.editwin = editwin
         self.text = editwin.text
-        self.calltip = None
         self._make_calltip_window = self._make_tk_calltip_window
+        self.calltip = None
 
     def close(self):
         self._make_calltip_window = None
@@ -39,45 +44,45 @@ class CallTips:
         # See __init__ for usage
         return CallTipWindow.CallTip(self.text)
 
-    def _remove_calltip_window(self, event=None):
-        if self.calltip:
-            self.calltip.hidetip()
-            self.calltip = None
-
     def force_open_calltip_event(self, event):
-        """Happens when the user really wants to open a CallTip, even if a
+        """
+        Happens when the user really wants to open a CallTip, even if a
         function call is needed.
         """
         self.open_calltip(True)
 
     def try_open_calltip_event(self, event):
-        """Happens when it would be nice to open a CallTip, but not really
+        """
+        Happens when it would be nice to open a CallTip, but not really
         necessary, for example after an opening bracket, so function calls
         won't be made.
         """
         self.open_calltip(False)
 
     def refresh_calltip_event(self, event):
-        """If there is already a calltip window, check if it is still needed,
+        """
+        If there is already a calltip window, check if it is still needed,
         and if so, reload it.
         """
         if self.calltip and self.calltip.is_active():
             self.open_calltip(False)
 
     def open_calltip(self, evalfuncs):
-        self._remove_calltip_window()
-
         hp = HyperParser(self.editwin, "insert")
         sur_paren = hp.get_surrounding_brackets('(')
         if not sur_paren:
+            self.calltip.hidetip()
             return
         hp.set_index(sur_paren[0])
         expression = hp.get_expression()
-        if not expression or (not evalfuncs and expression.find('(') != -1):
+        if self.calltip and not expression or (not evalfuncs and expression.find('(') != -1):
+            self.calltip.hidetip()
             return
         arg_text = self.fetch_tip(expression)
-        if not arg_text:
+        if self.calltip and not arg_text:
+            self.calltip.hidetip()
             return
+
         self.calltip = self._make_calltip_window()
         self.calltip.showtip(arg_text, sur_paren[0], sur_paren[1])
 
@@ -111,6 +116,7 @@ class CallTips:
         except AttributeError:
             rpcclt = None
         if rpcclt:
+            # print(rpcclt.run_extension_function('CallTips', 'fetch_tip', (expression,), {}))
             return rpcclt.remotecall("exec", "get_the_calltip",
                                      (expression,), {})
         else:

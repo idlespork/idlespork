@@ -34,6 +34,8 @@ import string
 import re
 import Tkinter
 
+bound_events = {}
+
 # the event type constants, which define the meaning of mc_type
 MC_KEYPRESS=0; MC_KEYRELEASE=1; MC_BUTTONPRESS=2; MC_BUTTONRELEASE=3;
 MC_ACTIVATE=4; MC_CIRCULATE=5; MC_COLORMAP=6; MC_CONFIGURE=7;
@@ -335,6 +337,7 @@ def MultiCallCreator(widget):
                             self.__binders[triplet[1]].bind(triplet, func)
                 else:
                     self.__eventinfo[sequence] = [func, []]
+                bound_events[sequence[2:-2]] = func
             return widget.bind(self, sequence, func, add)
 
         def unbind(self, sequence, funcid=None):
@@ -346,6 +349,8 @@ def MultiCallCreator(widget):
                     for triplet in triplets:
                         self.__binders[triplet[1]].unbind(triplet, func)
                     self.__eventinfo[sequence][0] = None
+                if sequence[2:-2] in bound_events:
+                    del bound_events[sequence[2:-2]]
             return widget.unbind(self, sequence, funcid)
 
         def event_add(self, virtual, *sequences):

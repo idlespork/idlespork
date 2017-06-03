@@ -56,11 +56,11 @@ class OutputWindow(EditorWindow):
     # Our own right-button menu
 
     rmenu_specs = [
-        ("Cut", "<<cut>>", "rmenu_check_cut"),
-        ("Copy", "<<copy>>", "rmenu_check_copy"),
-        ("Paste", "<<paste>>", "rmenu_check_paste"),
+        ("Cu_t", "<<cut>>", "rmenu_check_cut"),
+        ("Cop_y", "<<copy>>", "rmenu_check_copy"),
+        ("_Paste", "<<paste>>", "rmenu_check_paste"),
         (None, None, None),
-        ("Go to file/line", "<<goto-file-line>>", None),
+        ("_Go to file/line", "<<goto-file-line>>", None),
     ]
 
     file_line_pats = [
@@ -90,22 +90,53 @@ class OutputWindow(EditorWindow):
             line = self.text.get("insert -1line linestart",
                                  "insert -1line lineend")
             result = self._file_line_helper(line)
-            if not result:
-                tkMessageBox.showerror(
-                    "No special line",
-                    "The line you point at doesn't look like "
-                    "a valid file name followed by a line number.",
-                    parent=self.text)
-                return
+
+        # Check if click was in a block returned by a "??" command
+        if not result and 'stdout' in self.text.tag_names('insert'):
+            rng = self.text.tag_prevrange('stdout', "insert+1c")
+            if rng and rng[0] != rng[1]:
+                start, end = rng
+                s = self.text.get(start, 'insert lineend')
+                match = re.match(r"^File \"([^\"]*)\", line ([0-9]*):\n", s)
+                if match:
+                    result = match.group(1), int(match.group(2)) + s.count('\n') - 1
+
+        if not result:
+            tkMessageBox.showerror(
+                "No special line",
+                "The line you point at doesn't look like "
+                "a valid file name followed by a line number.",
+                parent=self.text)
+            return
+
         filename, lineno = result
-        edit = self.flist.open(filename)
-        edit.gotoline(lineno)
+        # If code is actually in shell, we still want to go there.
+        # This is useful if you use right click menu "Go to file/line" on a line in traceback
+        # that is in the shell (instead of clicking the link).
+        # Basically there's no reason not to have this.
+        if filename.startswith('<pyshell#') and filename.endswith('>'):
+            mark = filename[1:-1]
+            self.text.selection_clear()
+
+            if lineno != 1:
+                m = mark + " + %d lines linestart" % (lineno - 1)
+            else:
+                m = mark
+            self.text.tag_add('sel', m, "%s lineend" % m)
+            self.text.mark_set('insert', m)
+            self.text.see('insert')
+        else:
+            edit = self.flist.open(filename)
+            edit.gotoline(lineno)
 
     def _file_line_helper(self, line):
         for prog in self.file_line_progs:
             match = prog.search(line)
             if match:
                 filename, lineno = match.group(1, 2)
+                # It's ok if line is in the shell.
+                if filename.startswith('<pyshell#') and filename.endswith('>'):
+                    break
                 try:
                     f = open(filename, "r")
                     f.close()

@@ -36,7 +36,12 @@
 enable=True
 popupwait=2000
 imports=False
+imports-timeout=2
 onlycontaining=False
+twotabstocomplete = True
+entertocomplete = False
+dictkeys=False
+showlengths=False
 [AutoComplete_cfgBindings]
 force-open-completions=<Control-Key-space>
 [AutoComplete_bindings]
@@ -105,27 +110,37 @@ enable=True
 zoom-height=<Alt-Key-2>
 
 [BetterOutput]
-enable=1
+enable=True
 
 [MultiLineRun]
 enable=1
 enable_editor=0
 enable_shell=1
 
+[ExpressionEvaluate]
+enable=False
+enableupdating=False
+updatedelay=1000
+
+[OutHist]
+enable=False
+histsize=10
+
 [Squeezer]
-enable=1
+enable=True
 max-num-of-lines=30
 preview-command-posix=(xterm -e less %(fn)s; rm -f %(fn)s) &
 preview-command-win=notepad %(fn)s
 preview-command-mac=
 max-expand=50000
+squeeze-code=False
 [Squeezer_cfgBindings]
 squeeze-last-output=<Control-Key-equal>
 expand-last-squeezed=<Control-Key-plus> <Control-Shift-Key-equal> <Control-Shift-Key-plus>
 preview-last-squeezed=<Control-Key-minus>
 
 [BasicActions]
-enable=1
+enable=True
 [BasicActions_bindings]
 middle-clicked=<ButtonPress-2>
 middle-released=<ButtonRelease-2>

@@ -210,6 +210,9 @@ class SocketIO(object):
         seq = self.asynccall(oid, methodname, args, kwargs)
         return self.asyncreturn(seq)
 
+    def run_extension_function(self, ext_name, func_name, args, kwargs):
+        return self.remotecall('exec', 'run_extension_function', (ext_name, func_name) + tuple(args), dict(kwargs))
+
     def remotequeue(self, oid, methodname, args, kwargs):
         self.debug("remotequeue:asyncqueue: ", oid, methodname)
         seq = self.asyncqueue(oid, methodname, args, kwargs)

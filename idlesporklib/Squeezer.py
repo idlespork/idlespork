@@ -71,15 +71,44 @@ def _countlines(s, linewidth=_LINEWIDTH, tabwidth=_TABWIDTH):
     return linecount
 
 
+def tags_in_range(text, start, end):
+    """Helper function to get all the tags between two indexes"""
+    tags = []
+    start = text.index(start)
+    names = text.tag_names()
+
+    for name in names:
+        rng = text.tag_prevrange(name, end)
+        while rng:
+            i0, i1 = rng
+            if text.compare(i0, '<', start):
+                i0 = start
+            if text.compare(end, '<', i1):
+                i1 = end
+            if text.compare(i1, '<=', i0):
+                break
+            tags.append((name, len(text.get(start, i0)), len(text.get(i0, i1))))
+            newrng = text.tag_prevrange(name, i0)
+            if rng == newrng:
+                break
+            rng = newrng
+
+    return tags
+
+
 # define the extension's classes
 
 class ExpandingButton(Tkinter.Button):
-    def __init__(self, s, tags, numoflines, squeezer):
+    def __init__(self, s, tags, numoflines, squeezer, def_line=None, rangetags=()):
         self.s = s
         self.tags = tags
         self.squeezer = squeezer
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
+        self.rangetags = rangetags
+
+        # If this is for a stdin area, we should remember the line just before so it will appear in preview and copy.
+        self.def_line = def_line
         
         Tkinter.Button.__init__(self, text,
                                 text=self.get_caption(numoflines),
@@ -95,8 +124,11 @@ class ExpandingButton(Tkinter.Button):
         if numoflines is None:
             numoflines = self.squeezer.count_lines(self.s)
 
-        caption = "Squeezed text (about %d lines). "\
-                  "Double-click to expand, middle-click to copy" % numoflines
+        # This is just a cute indicator if the squeezed area is stdout/stderr or stdin.
+        typ = 'code' if self.tags == 'stdin' else 'text'
+
+        caption = "Squeezed %s (about %d lines). "\
+                  "Double-click to expand, middle-click to copy" % (typ, numoflines)
         if self.squeezer._PREVIEW_COMMAND:
             caption += ", right-click to preview."
         else:
@@ -113,24 +145,37 @@ class ExpandingButton(Tkinter.Button):
         rem_txt = self.s[Squeezer._MAX_EXPAND:]
 
         basetext = _get_base_text(self.editwin)
-        basetext.insert(self.text.index(self), expanded_txt, self.tags)
+        start = self.text.index(self)
+        basetext.insert(start, expanded_txt, self.tags)
+
+        if self.rangetags:
+            for name, i0, i1, in self.rangetags:
+                basetext.tag_add(name, start + '+%dc' % i0, start + '+%dc+%dc' % (i0, i1))
+
         if len(rem_txt) == 0:
             basetext.delete(self)
             self.squeezer.expandingbuttons.remove(self)
         else:
             self.s = rem_txt
             self.update_btn()
+
+    def copypreview_txt(self):
+        # Return correct text for copy and preview.
+        if self.tags == 'stdin':
+            return self.def_line + '\n' + self.s
+        else:
+            return self.s
         
     def copy(self, event):
         self.clipboard_clear()
-        self.clipboard_append(self.s, type='STRING')
+        self.clipboard_append(self.copypreview_txt(), type='STRING')
         self.selection_own()
 
     def preview(self, event):
         from tempfile import mktemp
         fn = mktemp("longidletext")
         f = open(fn, "w")
-        f.write(self.s)
+        f.write(self.copypreview_txt())
         f.close()
         os.system(self.squeezer._PREVIEW_COMMAND % {"fn":fn})
             
@@ -139,7 +184,22 @@ class ExpandingButton(Tkinter.Button):
         self.update_btn()
 
 class Squeezer:
+    """
+    Extension to squeeze long output into a button
 
+    This file was originally copied for Tal Einat's Squeezer package.
+
+    Options:
+        max-num-of-lines - output bigger than this will be squeezed.
+
+        max-expand - output will never be more than this amount of characters.
+
+        preview-command-nt(-win) - command to open preview application.
+
+        squeeze-code - flag for allowing to squeeze code.
+
+    Configure the key bindings expand-last-squeezed, preview-last-squeezed and squeeze-current-text.
+    """
     _MAX_NUM_OF_LINES = idleConf.GetOption("extensions", "Squeezer",
                                            "max-num-of-lines", type="int",
                                            default=30)
@@ -151,6 +211,10 @@ class Squeezer:
         "extensions", "Squeezer",
         "preview-command-"+{"nt":"win"}.get(os.name, os.name),
         default="", raw=True)
+
+    # Flag for whether or not stdin can be squeezing
+    _SQUEEZE_CODE = idleConf.GetOption("extensions", "Squeezer", "squeeze-code", type="bool", default=False,
+                                       member_name='_SQUEEZE_CODE')
 
     menudefs = [
         ('edit', [
@@ -192,7 +256,7 @@ class Squeezer:
             # Add squeeze-current-text to the right-click menu
             text.bind("<<squeeze-current-text>>",
                       self.squeeze_current_text_event)
-            _add_to_rmenu(editwin, [("Squeeze current text",
+            _add_to_rmenu(editwin, [("_Squeeze current text",
                                      "<<squeeze-current-text>>")])
 
     def count_lines(self, s):
@@ -221,6 +285,7 @@ class Squeezer:
         return _countlines(s, linewidth, tabwidth)
 
     def expand_last_squeezed_event(self, event):
+        """Expands bottom most squeezed block"""
         if self.expandingbuttons:
             self.expandingbuttons[-1].expand(event)
         else:
@@ -228,6 +293,7 @@ class Squeezer:
         return "break"
 
     def preview_last_squeezed_event(self, event):
+        """Opens a defined application to show squeezed text"""
         if self._PREVIEW_COMMAND and self.expandingbuttons:
             self.expandingbuttons[-1].preview(event)
         else:
@@ -235,6 +301,7 @@ class Squeezer:
         return "break"
 
     def squeeze_last_output_event(self, event):
+        """Squeezes bottom most un-squeezed block"""
         last_console = self.text.tag_prevrange("console",Tkinter.END)
         if not last_console:
             return "break"
@@ -250,18 +317,30 @@ class Squeezer:
         if not prev_ranges:
             return "break"
 
-        if not self.squeeze_range(*max(prev_ranges)):
+        # Get max element dynamically, in case the number of allowed tags to squeeze ever changes.
+        max_rng = prev_ranges[0]
+        for rng in prev_ranges[1:]:
+            if self.text.compare(max_rng[0][0], '<', rng[0][0]):
+                max_rng = rng
+
+        if not self.squeeze_range(*max_rng):
             self.text.bell()
         return "break"
         
     def squeeze_current_text_event(self, event):
+        """Squeeze selected block"""
         insert_tag_names = self.text.tag_names(Tkinter.INSERT)
-        for tag_name in ("stdout","stderr"):
+        for tag_name in ("stdout", "stderr"):
             if tag_name in insert_tag_names:
                 break
-        else: # no tag associated with the index
-            self.text.bell()
-            return "break"
+        else:
+            # Check if code squeezing is enabled.
+            if self._SQUEEZE_CODE and 'stdin' in insert_tag_names:
+                tag_name = 'stdin'
+            else:
+                # no tag associated with the index
+                self.text.bell()
+                return "break"
 
         # find the range to squeeze
         rng = self.text.tag_prevrange(tag_name, Tkinter.INSERT+"+1c")
@@ -273,6 +352,17 @@ class Squeezer:
         if not rng or rng[0]==rng[1]:
             return False
         start, end = rng
+
+        # If it's code that we are squeezing then we only squeeze from the second row. I think this is nicer, because
+        # mostly we'll be squeezing function definitions, and this will keep the 'def ...' visible.
+        if tag_name == 'stdin':
+            # It's nice to save the line just before, the "def" line, so it appears in preview and copy
+            # of the ExpandingButton.
+            def_line = self.text.get(start, start + " lineend")
+            start = self.text.index("%s+1l linestart" % start)
+        else:
+            def_line = None
+
         old_expandingbutton = self.find_button(end)
         
         s = self.text.get(start, end)
@@ -280,6 +370,9 @@ class Squeezer:
         if s and s[-1] == '\n':
             end = self.text.index("%s-1c" % end)
             s = s[:-1]
+
+        # This will preserve all tags, such as for colors and links
+        rangetags = tags_in_range(self.text, start, end)
         # delete the text
         _get_base_text(self.editwin).delete(start, end)
 
@@ -290,7 +383,7 @@ class Squeezer:
 
         # prepare an ExpandingButton
         numoflines = self.count_lines(s)
-        expandingbutton = ExpandingButton(s, tag_name, numoflines, self)
+        expandingbutton = ExpandingButton(s, tag_name, numoflines, self, def_line=def_line, rangetags=rangetags)
         # insert the ExpandingButton to the Text
         self.text.window_create(start, window=expandingbutton,
                                 padx=3, pady=5)

@@ -14,9 +14,7 @@
 
 from __future__ import print_function
 
-from idlesporklib.configHandler import idleConf
 from idlesporklib.Delegator import Delegator
-import time
 import re
 import sys
 import traceback
@@ -46,6 +44,12 @@ class MultiLineDelegator(Delegator):
 
 
 class MultiLineRun(object):
+    """
+    This extension allows for pasting of multiple lines of code into the shell for execution, and adds a
+    right click menu item to run multiple selected lines.
+
+    Developed by Roger D. Serwy for IDLEX, and imported by Ofir Reich to idlespork.
+    """
     # eol code from IOBinding.py
     eol = r"(\r\n)|\n|\r"  # \r\n (Windows), \n (UNIX), or \r (Mac)
     eol_re = re.compile(eol)
@@ -63,7 +67,7 @@ class MultiLineRun(object):
         if wsys == 'x11':
             self.text.bind('<Button-2>', self.paste, '+')  # For X11 middle click
 
-        self.editwin.rmenu_specs.append(("Run lines", "<<run-lines>>", 'rmenu_check_copy'))
+        self.editwin.rmenu_specs.append(("_Run lines", "<<run-lines>>", 'rmenu_check_copy'))
         self.text.bind("<<run-lines>>", self.run_lines)
 
     def paste(self, event=None):
@@ -81,20 +85,26 @@ class MultiLineRun(object):
 
         return "\n".join(lines)
 
-    def dedent(self, lines):
+    @staticmethod
+    def dedent_text(text):
+        return '\n'.join(MultiLineRun.dedent(text.splitlines()))
+
+    @staticmethod
+    def dedent(lines):
         """
         remove maximal amount of indents/spaces shared by all lines
         to enable pasting an equally indented region
         """
         # exclude commented-out lines, empty lines for calculation of greatest common indent to strip
 
-        indentation = self.find_max_indent(lines)
+        indentation = MultiLineRun.find_max_indent(lines)
         indentation_len = len(indentation)
         lines = [line[indentation_len:] if line.startswith(indentation) else line
                  for line in lines]
         return lines
 
-    def find_max_indent(self, lines):
+    @staticmethod
+    def find_max_indent(lines):
         """
         Return the common indentation shared by all lines,
         not including empty and comment lines
@@ -125,7 +135,15 @@ class MultiLineRun(object):
             return
 
         code = '\n'.join(self.dedent(code))
-        self.text.insert('end', code)
+        self.mld.paste = True
+        self.text.insert('end', code, 'TODO')
         self.text.tag_remove('sel', "1.0", 'end')
+        self.editwin.color.recolorize()
+        self.text.tag_add('stdin', 'iomark', 'end')
+
+        mark = 'pyshell#%d' % self.editwin.interp.gid
+        self.text.mark_set(mark, 'iomark')
+        self.text.mark_gravity(mark, 'left')
+
         self.editwin.interp.runcmd_from_source(code)
         self.text.see('end')

@@ -137,11 +137,11 @@ class PyShellEditorWindow(EditorWindow):
         self.color_breakpoint_text()
 
     rmenu_specs = [
-        ("Cut", "<<cut>>", "rmenu_check_cut"),
-        ("Copy", "<<copy>>", "rmenu_check_copy"),
-        ("Paste", "<<paste>>", "rmenu_check_paste"),
-        ("Set Breakpoint", "<<set-breakpoint-here>>", None),
-        ("Clear Breakpoint", "<<clear-breakpoint-here>>", None)
+        ("Cu_t", "<<cut>>", "rmenu_check_cut"),
+        ("Cop_y", "<<copy>>", "rmenu_check_copy"),
+        ("_Paste", "<<paste>>", "rmenu_check_paste"),
+        ("Set _Breakpoint", "<<set-breakpoint-here>>", None),
+        ("C_lear Breakpoint", "<<clear-breakpoint-here>>", None)
     ]
 
     def color_breakpoint_text(self, color=True):

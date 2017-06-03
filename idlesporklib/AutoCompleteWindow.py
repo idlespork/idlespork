@@ -25,8 +25,10 @@ WINCONFIG_SEQUENCE = "<Configure>"
 DOUBLECLICK_SEQUENCE = "<B1-Double-ButtonRelease>"
 
 class AutoCompleteWindow:
+    # Save global instance to make sure there is always at most one window.
+    instance = None
 
-    def __init__(self, widget):
+    def __init__(self, widget, twotabstocomplete=True, entertocomplete=False):
         # The widget (Text) on which we place the AutoCompleteWindow
         self.widget = widget
         # The widgets we create
@@ -59,6 +61,10 @@ class AutoCompleteWindow:
         self.lastkey_was_tab = False
         # Flag for showing only items containing typed text
         self.onlycontaining = False
+        # Flag for needing two tabs to complete
+        self.twotabstocomplete = twotabstocomplete
+        # Flag for allowing "enter" key to complete
+        self.entertocomplete = entertocomplete
 
     def _change_start(self, newstart):
         min_len = min(len(self.start), len(newstart))
@@ -176,6 +182,12 @@ class AutoCompleteWindow:
         """Show the autocomplete list, bind events.
         If complete is True, complete the text, and if there is exactly one
         matching completion, don't open a list."""
+
+        # If there's still a window showing quickly hide it.
+        if AutoCompleteWindow.instance is not None:
+            AutoCompleteWindow.instance.hide_window()
+            AutoCompleteWindow.instance = None
+
         self.onlycontaining = onlycontaining
         # Handle the start we already have
         self.completions, self.morecompletions = comp_lists
@@ -242,6 +254,8 @@ class AutoCompleteWindow:
         self.winconfigid = acw.bind(WINCONFIG_SEQUENCE, self.winconfig_event)
         self.doubleclickid = listbox.bind(DOUBLECLICK_SEQUENCE,
                                           self.doubleclick_event)
+
+        AutoCompleteWindow.instance = self
 
     def winconfig_event(self, event):
         if not self.is_active():
@@ -318,8 +332,14 @@ class AutoCompleteWindow:
             return "break"
 
         elif keysym == "Return":
-            self.hide_window()
-            return
+            if self.entertocomplete:
+                cursel = int(self.listbox.curselection()[0])
+                self._change_start(self.completions[cursel])
+                self.hide_window()
+                return "break"
+            else:
+                self.hide_window()
+                return
 
         elif (self.mode == COMPLETE_ATTRIBUTES and keysym in
               ("period", "space", "parenleft", "parenright", "bracketleft",
@@ -365,8 +385,8 @@ class AutoCompleteWindow:
             self._change_start(self.completions[newsel])
             return "break"
 
-        elif (keysym == "Tab" and not state):
-            if self.lastkey_was_tab:
+        elif keysym == "Tab" and not state:
+            if self.lastkey_was_tab or not self.twotabstocomplete:
                 # two tabs in a row; insert current selection and close acw
                 cursel = int(self.listbox.curselection()[0])
                 self._change_start(self.completions[cursel])
@@ -432,3 +452,5 @@ class AutoCompleteWindow:
         self.listbox = None
         self.autocompletewindow.destroy()
         self.autocompletewindow = None
+
+        AutoCompleteWindow.instance = None
