@@ -192,6 +192,8 @@ class Squeezer:
     Options:
         max-num-of-lines - output bigger than this will be squeezed.
 
+        min-num-of-lines - output smaller than this will *not* be squeezed.
+
         max-expand - output will never be more than this amount of characters.
 
         preview-command-nt(-win) - command to open preview application.
@@ -215,6 +217,9 @@ class Squeezer:
     # Flag for whether or not stdin can be squeezing
     _SQUEEZE_CODE = idleConf.GetOption("extensions", "Squeezer", "squeeze-code", type="bool", default=False,
                                        member_name='_SQUEEZE_CODE')
+
+    _MIN_NUM_OF_LINES = idleConf.GetOption("extensions", "Squeezer", "min-num-of-lines", type="int", default=1,
+                                           member_name="_MIN_NUM_OF_LINES")
 
     menudefs = [
         ('edit', [
@@ -307,13 +312,21 @@ class Squeezer:
             return "break"
 
         prev_ranges = []
-        for tag_name in ("stdout","stderr"):
+
+        if self._SQUEEZE_CODE:
+            valid_tags = ("stdout", "stderr", "stdin")
+        else:
+            valid_tags = ("stdout", "stderr")
+
+        for tag_name in valid_tags:
             rng = last_console
             while rng:
                 rng = self.text.tag_prevrange(tag_name, rng[0])
-                if rng and self.text.get(*rng).strip():
-                    prev_ranges.append((rng, tag_name))
-                    break
+                if rng:
+                    txt = self.text.get(*rng).strip()
+                    if txt and len(txt.splitlines()) > 3:
+                        prev_ranges.append((rng, tag_name))
+                        break
         if not prev_ranges:
             return "break"
 
@@ -397,6 +410,9 @@ class Squeezer:
 
     def find_button(self, pos):
         for btn in self.expandingbuttons:
-            if self.text.compare(pos, "==", btn):
-                return btn
+            try:
+                if self.text.compare(pos, "==", btn):
+                    return btn
+            except Tkinter.TclError:
+                pass
         return None

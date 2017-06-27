@@ -157,8 +157,11 @@ class AutoComplete:
             self.autocompletewindow.complete()
             return "break"
         else:
-            opened = self.open_completions(False, True, True)
-            if opened:
+            try:
+                opened = self.open_completions(False, True, True)
+                if opened:
+                    return "break"
+            except EOFError:
                 return "break"
 
     def _open_completions_later(self, *args):

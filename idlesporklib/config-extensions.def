@@ -129,6 +129,7 @@ histsize=10
 [Squeezer]
 enable=True
 max-num-of-lines=30
+min-num-of-lines=3
 preview-command-posix=(xterm -e less %(fn)s; rm -f %(fn)s) &
 preview-command-win=notepad %(fn)s
 preview-command-mac=
