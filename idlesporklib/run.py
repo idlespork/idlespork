@@ -436,7 +436,7 @@ class RunThread(threading.Thread):
         if (self != World.current_thread) and not self.trueoutput:
             self.output.write(output)
         else:
-            sys.stdout.real_stdout.write(output)
+            remote_stdout.write(output)
 
     def flush(self):
         sys.stdout.real_stdout.flush()
