@@ -265,9 +265,12 @@ class Squeezer:
                                      "<<squeeze-current-text>>")])
 
     def count_lines(self, s):
-        "Calculate number of lines in given text.\n\n" \
-        "Before calculation, the tab width and line length of the text are" \
-        "fetched, so that up-to-date values are used."
+        """
+        Calculate number of lines in given text.
+
+        Before calculation, the tab width and line length of the text are
+        fetched, so that up-to-date values are used.
+        """
         # Tab width is configurable
         tabwidth = self.editwin.get_tabwidth()
 
@@ -324,7 +327,7 @@ class Squeezer:
                 rng = self.text.tag_prevrange(tag_name, rng[0])
                 if rng:
                     txt = self.text.get(*rng).strip()
-                    if txt and len(txt.splitlines()) > 3:
+                    if txt and (tag_name != 'stdin' or '\n' in txt) and self.count_lines(txt) > self._MIN_NUM_OF_LINES:
                         prev_ranges.append((rng, tag_name))
                         break
         if not prev_ranges:

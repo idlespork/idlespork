@@ -7,23 +7,29 @@
 #
 # The class below was constructed from code copied from the file `completerlib.py` in the IPython project.
 
-
+from __future__ import print_function
 import inspect
 import os
 import re
 import sys
+import imp
+from collections import defaultdict
+from inspect import isclass
 from time import time
 from zipimport import zipimporter
 
-from configHandler import idleConf
+from idlesporklib.configHandler import idleConf
+from idlesporklib import Suggest
+from idlesporklib import sporktools
 
 try:
     # Python >= 3.3
+    # noinspection PyCompatibility
     from importlib.machinery import all_suffixes
     _suffixes = all_suffixes()
 except ImportError:
     from imp import get_suffixes
-    _suffixes = [ s[0] for s in get_suffixes() ]
+    _suffixes = [s[0] for s in get_suffixes()]
 
 
 class ModuleCompletion(object):
@@ -41,6 +47,8 @@ class ModuleCompletion(object):
                            r'|'.join(re.escape(s) for s in _suffixes))
 
     rootmodules_cache = {}
+
+    allobjs = None
 
     @staticmethod
     def module_list(path):
@@ -193,3 +201,90 @@ class ModuleCompletion(object):
                 return mods, mods
             else:
                 return [mod for mod in mods if not mod.startswith('_')], mods
+
+    @staticmethod
+    def inspect_all_objs():
+        if ModuleCompletion.allobjs is not None:
+            return
+
+        visited = set()
+        defclass = re.compile('\s*(class|def) ([_A-z][_A-z0-9]*)\(')
+        objs = defaultdict(dict)
+
+        rootmodules = list(sys.builtin_module_names)
+        for name in rootmodules:
+            objs[name][('module', name)] = ('builtin', 0)
+            m = __import__(name)
+            for attr in dir(m):
+                a = getattr(m, attr)
+                if isclass(a):
+                    objs[attr][('class', name)] = ('builtin', 0)
+                elif callable(a):
+                    objs[attr][('def', name)] = ('builtin', 0)
+
+        for path in sys.path:
+            if path == '':
+                path = '.'
+
+            if os.path.isdir(path):
+                for root, dirs, nondirs in os.walk(path, followlinks=True):
+                    if '-' in root[len(path) + 1:] or root in visited:
+                        dirs[:] = []
+                        continue
+
+                    visited.add(root)
+
+                    for name in nondirs:
+                        if name.endswith('.py') and name != '__init__.py':
+                            filepath = os.path.join(root, name)
+                            modulepath = filepath[len(path) + 1:].replace('/', '.')[:-3]
+
+                            if ('module', modulepath) not in objs[name[:-3]]:
+                                objs[name[:-3]][('module', modulepath)] = (filepath, 0)
+
+                                with open(filepath, 'r') as f:
+                                    for i, line in enumerate(f):
+                                        m = defclass.match(line)
+                                        if m:
+                                            t, sym = m.groups()
+                                            objs[sym][(t, modulepath)] = (filepath, i)
+        ModuleCompletion.allobjs = objs
+
+    @staticmethod
+    def patch_suggestions():
+        ModuleCompletion.inspect_all_objs()
+
+        old_import_suggest = Suggest._import_suggest
+
+        def new_import_suggest(name, source):
+            old_import_suggest(name, source)
+
+            if name in ModuleCompletion.allobjs:
+                cl = [name]
+            else:
+                cl = Suggest.close_words(name, ModuleCompletion.allobjs, 3)
+
+
+            if len(cl) > 0:
+                Suggest._newline()
+                print("Here are some import suggestions:", file=sys.stderr)
+                for word in cl:
+                    for (t, modulepath), (filepath, linenum) in ModuleCompletion.allobjs[word].items():
+                        if t == 'module':
+                            if modulepath == '' or filepath == 'builtin':
+                                link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
+                                                                      "import %s" % word).create()
+                                Suggest._newline()
+                                print("import %s" % link1, file=sys.stderr)
+                            else:
+                                link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
+                                                                      "from %s import %s" % (modulepath, word)).create()
+                                Suggest._newline()
+                                print("from %s import %s" % (modulepath, link1), file=sys.stderr)
+                        else:
+                            link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
+                                                                  "from %s import %s" % (modulepath, word)).create()
+                            Suggest._newline()
+                            print("from %s import %s" % (modulepath, link1), file=sys.stderr)
+
+        Suggest._import_suggest = new_import_suggest
