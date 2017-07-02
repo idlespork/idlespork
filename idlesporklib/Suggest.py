@@ -39,7 +39,7 @@ def _import_suggest(name, source):
     link1 = sporktools.Links.ExecCodeLink(None, "import %s" % name, \
         "import %s" % name).create()
     #link2 = sporktools.Links.ExecCodeLink(None, "import and rerun", ["import %s" % name, source]).create()
-    _newline()
+    newline()
     print("Do you want to %s?" % (link1), file=sys.stderr)
     #print("Do you want to %s? %s?" % (link1, link2), file=sys.stderr)
 
@@ -73,10 +73,10 @@ def _spelling_suggest(name, source, last_trace, filename, lst = None):
         for word in cl:
             links.append(sporktools.Links.ExecCodeLink(None, \
                 word, source.replace(name, word)).create())
-        _newline()
+        newline()
         print("Did you mean %s?" % " / ".join(links), file=sys.stderr)
 
-def _newline():
+def newline():
     global softnewline
     if softnewline:
         print(file=sys.stderr)

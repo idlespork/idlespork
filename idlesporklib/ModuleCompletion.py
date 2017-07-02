@@ -19,8 +19,8 @@ from time import time
 from zipimport import zipimporter
 
 from idlesporklib.configHandler import idleConf
-from idlesporklib import Suggest
 from idlesporklib import sporktools
+from idlesporklib import Suggest
 
 try:
     # Python >= 3.3
@@ -191,7 +191,7 @@ class ModuleCompletion(object):
             if lastword:
                 withcase = [mod for mod in mods if mod.startswith(lastword)]
                 if withcase:
-                    mods =  withcase
+                    mods = withcase
                 # if none, then case insensitive ones are ok too
                 else:
                     text_low = lastword.lower()
@@ -208,7 +208,7 @@ class ModuleCompletion(object):
             return
 
         visited = set()
-        defclass = re.compile('\s*(class|def) ([_A-z][_A-z0-9]*)\(')
+        defclass = re.compile('(class|def) ([_A-z][_A-z0-9]*)\(')
         objs = defaultdict(dict)
 
         rootmodules = list(sys.builtin_module_names)
@@ -266,7 +266,7 @@ class ModuleCompletion(object):
 
 
             if len(cl) > 0:
-                Suggest._newline()
+                Suggest.newline()
                 print("Here are some import suggestions:", file=sys.stderr)
                 for word in cl:
                     for (t, modulepath), (filepath, linenum) in ModuleCompletion.allobjs[word].items():
@@ -274,17 +274,17 @@ class ModuleCompletion(object):
                             if modulepath == '' or filepath == 'builtin':
                                 link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                       "import %s" % word).create()
-                                Suggest._newline()
+                                Suggest.newline()
                                 print("import %s" % link1, file=sys.stderr)
                             else:
                                 link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                       "from %s import %s" % (modulepath, word)).create()
-                                Suggest._newline()
+                                Suggest.newline()
                                 print("from %s import %s" % (modulepath, link1), file=sys.stderr)
                         else:
                             link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                   "from %s import %s" % (modulepath, word)).create()
-                            Suggest._newline()
+                            Suggest.newline()
                             print("from %s import %s" % (modulepath, link1), file=sys.stderr)
 
         Suggest._import_suggest = new_import_suggest
