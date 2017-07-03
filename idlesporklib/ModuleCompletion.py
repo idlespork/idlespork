@@ -237,17 +237,20 @@ class ModuleCompletion(object):
                     for name in nondirs:
                         if name.endswith('.py') and name != '__init__.py':
                             filepath = os.path.join(root, name)
-                            modulepath = filepath[len(path) + 1:].replace('/', '.')[:-3]
+                            name = name[:-3]
+                            modulepath = root[len(path) + 1:].replace('/', '.')
+                            if modulepath.endswith('.'):
+                                modulepath = modulepath[:-1]
 
-                            if ('module', modulepath) not in objs[name[:-3]]:
-                                objs[name[:-3]][('module', modulepath)] = (filepath, 0)
+                            if ('module', modulepath) not in objs[name]:
+                                objs[name][('module', modulepath)] = (filepath, 0)
 
                                 with open(filepath, 'r') as f:
                                     for i, line in enumerate(f):
                                         m = defclass.match(line)
                                         if m:
                                             t, sym = m.groups()
-                                            objs[sym][(t, modulepath)] = (filepath, i)
+                                            objs[sym][(t, '%s.%s' % (modulepath, name))] = (filepath, i)
         ModuleCompletion.allobjs = objs
 
     @staticmethod
