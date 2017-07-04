@@ -62,7 +62,8 @@ class AutoComplete:
     menudefs = [
         ('edit', [
             ("Show Completions", "<<force-open-completions>>"),
-        ])
+        ]),
+        ('shell', [('Patch _suggestions', '<<patch-suggestions>>')])
     ]
 
     popupwait = idleConf.GetOption("extensions", "AutoComplete",
@@ -104,6 +105,8 @@ class AutoComplete:
         # delayed call.
         self._delayed_completion_id = None
         self._delayed_completion_index = None
+
+        self.text.bind("<<patch-suggestions>>", self.patch_suggestions_event)
 
     def _make_autocomplete_window(self):
         return AutoCompleteWindow.AutoCompleteWindow(self.text, self.twotabstocomplete, self.entertocomplete)
@@ -391,6 +394,15 @@ class AutoComplete:
     def get_module_completion(self, line):
         """Get module completions for the line"""
         return ModuleCompletion.module_completion(line)
+
+    def patch_suggestions_event(self, event):
+        self.patch_suggestions()
+
+    @boundremotefunc
+    def patch_suggestions(self):
+        from threading import Thread
+        print 'preparing suggestions...'
+        Thread(target=ModuleCompletion.patch_suggestions).start()
 
 
 if __name__ == '__main__':

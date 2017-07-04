@@ -51,6 +51,8 @@ class ModuleCompletion(object):
     rootmodules_cache = {}
 
     allobjs = None
+    executing_patch = False
+    patched = False
 
     @staticmethod
     def module_list(path):
@@ -263,6 +265,10 @@ class ModuleCompletion(object):
 
     @staticmethod
     def patch_suggestions():
+        if ModuleCompletion.patched or ModuleCompletion.executing_patch:
+            return
+
+        ModuleCompletion.executing_patch = True
         ModuleCompletion.inspect_all_objs()
 
         old_import_suggest = Suggest.import_suggest
@@ -309,3 +315,6 @@ class ModuleCompletion(object):
                     print(suggestion, file=sys.stderr)
 
         Suggest.import_suggest = new_import_suggest
+        ModuleCompletion.executing_patch = False
+        ModuleCompletion.patched = True
+        print('done preparing suggestions.')
