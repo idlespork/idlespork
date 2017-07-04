@@ -1,9 +1,9 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) IPython Development Team.
 #  Distributed under the terms of the Modified BSD License.
 #
 #  The full license is in the file IPython_COPYING.txt, distributed with this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 # The class below was constructed from code copied from the file `completerlib.py` in the IPython project.
 
@@ -21,6 +21,8 @@ from zipimport import zipimporter
 from idlesporklib.configHandler import idleConf
 from idlesporklib import sporktools
 from idlesporklib import Suggest
+from idlesporklib.spell import candidates
+from idlesporklib import Links
 
 try:
     # Python >= 3.3
@@ -235,10 +237,16 @@ class ModuleCompletion(object):
                     visited.add(root)
 
                     for name in nondirs:
-                        if name.endswith('.py') and name != '__init__.py':
+                        if name.endswith('.py'):
                             filepath = os.path.join(root, name)
-                            name = name[:-3]
-                            modulepath = root[len(path) + 1:].replace('/', '.')
+
+                            if name == '__init__.py':
+                                name = root[len(path) + 1:].split('/')[-1]
+                                modulepath = '.'.join(root[len(path) + 1:].split('/')[:-1])
+                            else:
+                                name = name[:-3]
+                                modulepath = root[len(path) + 1:].replace('/', '.')
+
                             if modulepath.endswith('.'):
                                 modulepath = modulepath[:-1]
 
@@ -257,37 +265,47 @@ class ModuleCompletion(object):
     def patch_suggestions():
         ModuleCompletion.inspect_all_objs()
 
-        old_import_suggest = Suggest._import_suggest
+        old_import_suggest = Suggest.import_suggest
 
         def new_import_suggest(name, source):
             old_import_suggest(name, source)
 
-            if name in ModuleCompletion.allobjs:
-                cl = [name]
-            else:
-                cl = Suggest.close_words(name, ModuleCompletion.allobjs, 3)
-
+            cl = candidates(name, ModuleCompletion.allobjs)
+            suggestions = []
 
             if len(cl) > 0:
-                Suggest.newline()
-                print("Here are some import suggestions:", file=sys.stderr)
                 for word in cl:
                     for (t, modulepath), (filepath, linenum) in ModuleCompletion.allobjs[word].items():
                         if t == 'module':
+                            if filepath not in ['builtin', '']:
+                                filelink = Links.FileLink(None, 'M', filepath, linenum + 1).create()
+                            else:
+                                filelink = 'BM'
+
                             if modulepath == '' or filepath == 'builtin':
                                 link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                       "import %s" % word).create()
-                                Suggest.newline()
-                                print("import %s" % link1, file=sys.stderr)
+                                suggestions.append("(%s) import %s" % (filelink, link1))
                             else:
                                 link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                       "from %s import %s" % (modulepath, word)).create()
-                                Suggest.newline()
-                                print("from %s import %s" % (modulepath, link1), file=sys.stderr)
+                                suggestions.append("(%s) from %s import %s" % (filelink, modulepath, link1))
                         else:
+                            tag = 'C' if t == 'class' else 'F'
+                            if filepath not in ['builtin', '']:
+                                filelink = Links.FileLink(None, tag, filepath, linenum + 1).create()
+                            else:
+                                filelink = 'B' + tag
                             link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                   "from %s import %s" % (modulepath, word)).create()
-                            Suggest.newline()
-                            print("from %s import %s" % (modulepath, link1), file=sys.stderr)
+                            suggestions.append("(%s) from %s import %s" % (filelink, modulepath, link1))
 
-        Suggest._import_suggest = new_import_suggest
+            if suggestions:
+                Suggest.newline()
+                print("Here are some import suggestions:", file=sys.stderr)
+                suggestions = sorted(suggestions, key=lambda x: x[3:])
+                for suggestion in suggestions:
+                    Suggest.newline()
+                    print(suggestion, file=sys.stderr)
+
+        Suggest.import_suggest = new_import_suggest

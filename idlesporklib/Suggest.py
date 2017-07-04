@@ -21,7 +21,7 @@ def exception_suggest(typ, val, tb, source, filename):
         m = re.match("^(?:global )?name '(.*)' is not defined$", str(val))
         if m:
             undefname = m.group(1)
-            _import_suggest(undefname, source)
+            import_suggest(undefname, source)
             _spelling_suggest(undefname, source, last_trace, filename)
     if typ == exceptions.AttributeError:
         m = re.search("object has no attribute '(.*)'$", str(val))
@@ -30,7 +30,7 @@ def exception_suggest(typ, val, tb, source, filename):
             _spelling_suggest_attr_error(undefname, source, \
                 last_trace, filename)
             
-def _import_suggest(name, source):
+def import_suggest(name, source):
     try:
         fl, path, desc = imp.find_module(name)
         if fl is not None: fl.close()
