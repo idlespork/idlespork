@@ -40,6 +40,7 @@ import traceback
 import copy_reg
 import types
 import marshal
+from collections import defaultdict
 
 
 def unpickle_code(ms):
@@ -119,6 +120,7 @@ class RPCServer(SocketServer.TCPServer):
 objecttable = {}
 request_queue = Queue.Queue(0)
 response_queue = Queue.Queue(0)
+messages_queue = defaultdict(Queue.Queue)
 
 
 class SocketIO(object):
@@ -411,6 +413,7 @@ class SocketIO(object):
         """
         while 1:
             # send queued response if there is one available
+            self.debug("pollresponse starting get:myseq:%s" % myseq)
             try:
                 qmsg = response_queue.get(0)
             except Queue.Empty:
@@ -419,25 +422,34 @@ class SocketIO(object):
                 seq, response = qmsg
                 message = (seq, ('OK', response))
                 self.putmessage(message)
+
             # poll for message on link
+            # first check if another pollmessage call saved a message for us
             try:
-                message = self.pollmessage(wait)
-                if message is None:  # socket not ready
+                message = messages_queue[myseq].get(False)
+                self.debug("pollresponse found message myseq:%s:message:%s" % (myseq, message))
+            except Queue.Empty:
+                try:
+                    message = self.pollmessage(wait)
+                    if message is None:  # socket not ready
+                        return None
+                except EOFError:
+                    self.handle_EOF()
                     return None
-            except EOFError:
-                self.handle_EOF()
-                return None
-            except AttributeError:
-                return None
+                except AttributeError:
+                    self.debug("pollresponse:%s:except Attribute Error" % myseq)
+                    return None
+
+            self.debug("pollresponse done get:myseq:%s" % myseq)
             seq, resq = message
             how = resq[0]
-            self.debug("pollresponse:%d:myseq:%s" % (seq, myseq))
+            self.debug("pollresponse:%d:myseq:%s:how:%s" % (seq, myseq, how))
             # process or queue a request
             if how in ("CALL", "QUEUE"):
-                self.debug("pollresponse:%d:localcall:call:" % seq)
+                self.debug("pollresponse:%d:myseq:%s:localcall:call" % (seq, myseq))
                 response = self.localcall(seq, resq)
-                self.debug("pollresponse:%d:localcall:response:%s"
-                           % (seq, response))
+                self.debug("pollresponse:%d:myseq:%s:localcall:response:%s"
+                           % (seq, myseq, response))
                 if how == "CALL":
                     self.putmessage((seq, response))
                 elif how == "QUEUE":
@@ -446,17 +458,25 @@ class SocketIO(object):
                 continue
             # return if completed message transaction
             elif seq == myseq:
+                self.debug("pollresponse:%d:completed" % seq)
                 return resq
             # must be a response for a different thread:
             else:
                 cv = self.cvars.get(seq, None)
-                # response involving unknown sequence number is discarded,
-                # probably intended for prior incarnation of server
+                self.debug("pollresponse other thread seq:%d:myseq:%s:how:%s:cv:%r" % (seq, myseq, how, cv is None))
+                # Old comment:
+                #   "response involving unknown sequence number is discarded,
+                #   probably intended for prior incarnation of server"
+                # Dror: That's not right. There has always been a race condition on messages coming back from
+                # #S. If a socket thread and some other thread put a message at the same time to go back to #C,
+                # when is processes one the other can be polled - and then discarded. We don't want that.
                 if cv is not None:
                     cv.acquire()
                     self.responses[seq] = resq
                     cv.notify()
                     cv.release()
+                else:
+                    messages_queue[seq].put(message)
                 continue
 
     def handle_EOF(self):
