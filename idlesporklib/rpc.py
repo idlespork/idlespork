@@ -413,7 +413,6 @@ class SocketIO(object):
         """
         while 1:
             # send queued response if there is one available
-            self.debug("pollresponse starting get:myseq:%s" % myseq)
             try:
                 qmsg = response_queue.get(0)
             except Queue.Empty:
@@ -440,10 +439,8 @@ class SocketIO(object):
                     self.debug("pollresponse:%s:except Attribute Error" % myseq)
                     return None
 
-            self.debug("pollresponse done get:myseq:%s" % myseq)
             seq, resq = message
             how = resq[0]
-            self.debug("pollresponse:%d:myseq:%s:how:%s" % (seq, myseq, how))
             # process or queue a request
             if how in ("CALL", "QUEUE"):
                 self.debug("pollresponse:%d:myseq:%s:localcall:call" % (seq, myseq))
@@ -463,7 +460,6 @@ class SocketIO(object):
             # must be a response for a different thread:
             else:
                 cv = self.cvars.get(seq, None)
-                self.debug("pollresponse other thread seq:%d:myseq:%s:how:%s:cv:%r" % (seq, myseq, how, cv is None))
                 # Old comment:
                 #   "response involving unknown sequence number is discarded,
                 #   probably intended for prior incarnation of server"
