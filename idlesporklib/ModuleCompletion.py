@@ -265,8 +265,14 @@ class ModuleCompletion(object):
 
     @staticmethod
     def patch_suggestions():
-        if ModuleCompletion.patched or ModuleCompletion.executing_patch:
+        if ModuleCompletion.patched:
+            print('already patched.')
             return
+        elif ModuleCompletion.executing_patch:
+            print('patching already taking place...')
+            return
+
+        print('preparing suggestions...')
 
         ModuleCompletion.executing_patch = True
         ModuleCompletion.inspect_all_objs()

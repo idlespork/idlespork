@@ -401,7 +401,6 @@ class AutoComplete:
     @boundremotefunc
     def patch_suggestions(self):
         from threading import Thread
-        print 'preparing suggestions...'
         Thread(target=ModuleCompletion.patch_suggestions).start()
 
 
