@@ -463,8 +463,7 @@ class SocketIO(object):
         "action taken upon link being closed by peer"
         self.EOFhook()
         self.debug("handle_EOF")
-        for key in self.cvars:
-            cv = self.cvars[key]
+        for key, cv in list(self.cvars.items()):
             cv.acquire()
             self.responses[key] = ('EOF', None)
             cv.notify()
