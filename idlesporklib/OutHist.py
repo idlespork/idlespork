@@ -20,6 +20,7 @@ class OutHist:
     def __init__(self, editwin=None):
         if editwin is not None and hasattr(editwin, 'interp'):
             self.editwin = editwin
+            self.editwin.interp.register_onrestart(self._loop_init)
             self._loop_init()
 
     def _loop_init(self):

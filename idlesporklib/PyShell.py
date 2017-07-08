@@ -389,6 +389,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.port = PORT
         self.original_compiler_flags = self.compile.compiler.flags
         self.subprocess_cwd = None
+        self.onrestart_funcs = set()
 
     _afterid = None
     rpcclt = None
@@ -465,6 +466,10 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.poll_subprocess()
         return self.rpcclt
 
+    def register_onrestart(self, func):
+        """Register a function to be called on shell restart"""
+        self.onrestart_funcs.add(func)
+
     def restart_subprocess(self, with_cwd=False, filename=''):
         if self.restarting:
             return self.rpcclt
@@ -507,6 +512,11 @@ class ModifiedInterpreter(InteractiveInterpreter):
             debug.load_breakpoints()
         self.compile.compiler.flags = self.original_compiler_flags
         self.restarting = False
+
+        # call all registered functions
+        for func in self.onrestart_funcs:
+            func()
+
         return self.rpcclt
 
     def __request_interrupt(self):

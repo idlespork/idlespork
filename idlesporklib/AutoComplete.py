@@ -395,7 +395,8 @@ class AutoComplete:
         """Get module completions for the line"""
         return ModuleCompletion.module_completion(line)
 
-    def patch_suggestions_event(self, event):
+    def patch_suggestions_event(self, event=None):
+        self.editwin.interp.register_onrestart(self.patch_suggestions)
         self.patch_suggestions()
 
     @boundremotefunc
