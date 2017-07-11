@@ -212,7 +212,8 @@ class ModuleCompletion(object):
             return
 
         visited = set()
-        defclass = re.compile('(class|def) ([_A-z][_A-z0-9]*)\(')
+        defclass = re.compile('(class|def) ([_A-z][_A-z0-9]*)[\(:]')
+        variable = re.compile('([A-z][_A-z0-9]+)\s=')
         objs = defaultdict(dict)
 
         rootmodules = list(sys.builtin_module_names)
@@ -261,6 +262,11 @@ class ModuleCompletion(object):
                                         if m:
                                             t, sym = m.groups()
                                             objs[sym][(t, '%s.%s' % (modulepath, name))] = (filepath, i)
+                                        else:
+                                            m = variable.match(line)
+                                            if m:
+                                                objs[m.group(1)][('var', '%s.%s' % (modulepath, name))] = (filepath, i)
+
         ModuleCompletion.allobjs = objs
 
     @staticmethod
@@ -290,33 +296,43 @@ class ModuleCompletion(object):
                     for (t, modulepath), (filepath, linenum) in ModuleCompletion.allobjs[word].items():
                         if t == 'module':
                             if filepath not in ['builtin', '']:
+                                tag = 'M'
                                 filelink = Links.FileLink(None, 'M', filepath, linenum + 1).create()
                             else:
+                                tag = 'BM'
                                 filelink = 'BM'
 
                             if modulepath == '' or filepath == 'builtin':
                                 link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                       "import %s" % word).create()
-                                suggestions.append("(%s) import %s" % (filelink, link1))
+                                suggestions.append(("(%s) import %s" % (filelink, link1),
+                                                    "(%s) import %s" % (tag, word)))
                             else:
                                 link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                       "from %s import %s" % (modulepath, word)).create()
-                                suggestions.append("(%s) from %s import %s" % (filelink, modulepath, link1))
+                                suggestions.append(("(%s) from %s import %s" % (filelink, modulepath, link1),
+                                                    "(%s) from %s import %s" % (tag, modulepath, word)))
                         else:
-                            tag = 'C' if t == 'class' else 'F'
+                            if t == 'class':
+                                tag = 'C'
+                            elif t == 'def':
+                                tag = 'F'
+                            else:  # t == 'var'
+                                tag = 'V'
+
                             if filepath not in ['builtin', '']:
                                 filelink = Links.FileLink(None, tag, filepath, linenum + 1).create()
                             else:
                                 filelink = 'B' + tag
                             link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
                                                                   "from %s import %s" % (modulepath, word)).create()
-                            suggestions.append("(%s) from %s import %s" % (filelink, modulepath, link1))
+                            suggestions.append(("(%s) from %s import %s" % (filelink, modulepath, link1),
+                                                "(%s) from %s import %s" % (tag, modulepath, word)))
 
             if suggestions:
                 Suggest.newline()
                 print("Here are some import suggestions:", file=sys.stderr)
-                suggestions = sorted(suggestions, key=lambda x: x[3:])
-                for suggestion in suggestions:
+                for suggestion, realtxt in sorted(suggestions, key=lambda x: x[1]):
                     Suggest.newline()
                     print(suggestion, file=sys.stderr)
 
