@@ -41,6 +41,7 @@ import copy_reg
 import types
 import marshal
 from collections import defaultdict
+import time
 
 
 def unpickle_code(ms):
@@ -151,7 +152,7 @@ class SocketIO(object):
     def debug(self, *args):
         if not self.debugging:
             return
-        s = self.location + " " + str(threading.currentThread().getName())
+        s = str(time.time()).ljust(15) + self.location + " " + str(threading.currentThread().getName())
         for a in args:
             s = s + " " + str(a)
         print>>sys.__stderr__, s
@@ -227,6 +228,11 @@ class SocketIO(object):
             cvar = threading.Condition()
             self.cvars[seq] = cvar
         self.debug(("asynccall:%d:" % seq), oid, methodname, args, kwargs)
+        if args == ('Exception ', 'stderr') or 'Tk' in globals():
+            import traceback
+            self.debug('\n'.join(map(str, traceback.extract_stack())))
+            import pdb
+            pdb.set_trace()
         self.putmessage((seq, request))
         return seq
 

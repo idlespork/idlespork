@@ -284,7 +284,7 @@ def get_arg_text(ob):
     else:
         doc = getattr(ob, "__doc__", "")
     if doc:
-        for line in doc.split('\n', _MAX_LINES)[:_MAX_LINES]:
+        for line in doc.strip().split('\n', _MAX_LINES)[:_MAX_LINES]:
             line = line.strip()
             if not line:
                 break

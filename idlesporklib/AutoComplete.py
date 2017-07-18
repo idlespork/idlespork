@@ -373,9 +373,11 @@ class AutoComplete:
                     # In any case, it's configurable.
                     try:
                         if isinstance(entity, list):
-                            return SHOWCALLTIP, 'list[0..%d]' % len(entity)
+                            return SHOWCALLTIP, 'list[0:%d]' % len(entity)
                         elif isinstance(entity, tuple):
-                            return SHOWCALLTIP, 'tuple[0..%d]' % len(entity)
+                            return SHOWCALLTIP, 'tuple[0:%d]' % len(entity)
+                        elif entity.__class__.__name__ == 'ndarray':
+                            return SHOWCALLTIP, 'ndarray({}, dtype={})'.format(entity.shape, entity.dtype)
                     except:
                         pass
                     return [], []
