@@ -95,6 +95,10 @@ enable=True
 enable_shell=False
 enable_editor=True
 
+[CustomizePrompt]
+enable=True
+prompt-format=>>>
+
 [ScriptBinding]
 enable=True
 enable_shell=False
