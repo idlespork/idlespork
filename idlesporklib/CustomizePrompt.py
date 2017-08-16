@@ -14,7 +14,7 @@ class CustomizePrompt(object):
 
         %dS - seconds since last execution
 
-        %df -
+        %df - deci-seconds since last execution
     """
 
     _PROMPT_FORMAT = idleConf.GetOption("extensions", "CustomizePrompt", "prompt-format", type="str", default='>>> ',
