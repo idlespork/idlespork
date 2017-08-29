@@ -449,7 +449,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.spawn_subprocess()
         #time.sleep(20) # test to simulate GUI not accepting connection
         # Accept the connection from the Python execution server
-        self.rpcclt.listening_sock.settimeout(20)
+        self.rpcclt.listening_sock.settimeout(30)
         try:
             self.rpcclt.accept()
         except socket.timeout:

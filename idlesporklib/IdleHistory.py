@@ -38,12 +38,14 @@ class History(object):
         self.text = text
         self.history = self.ph.get()
         self.super_history = list(enumerate(self.history))
+        self.smart_history = []
         self.prefix = None
         self.pointer = None
         self.suggested = []
         self.cyclic = idleConf.GetOption("main", "History", "cyclic", 1, "bool")
         text.bind("<<history-previous>>", self.history_prev)
         text.bind("<<history-next>>", self.history_next)
+        text.bind("<<history-guess>>", self.history_guess)
 
     def check_changed(self):
         # If pointer and prefix are set, check if they are still "true", i.e. user didn't change line since
@@ -82,10 +84,14 @@ class History(object):
 
     def history_prev(self, event):
         """Fetch earlier statement; start with most recent."""
-        self.fetch(reverse=True)
+        self.fetch(self.super_history)
         return "break"
 
-    def fetch(self, reverse):
+    def history_guess(self, event):
+        self.fetch(self.smart_history)
+        return "break"
+
+    def fetch(self, history):
         """Fetch statememt and replace current line in text widget.
 
         Set prefix and pointer as needed for successive fetches.
@@ -95,7 +101,7 @@ class History(object):
         """
         self.check_changed()
 
-        nhist = len(self.super_history)
+        nhist = len(history)
         pointer = self.pointer
         prefix = self.prefix
         suggested = self.suggested
@@ -103,20 +109,13 @@ class History(object):
         # If pointer or prefix are not set, maybe because of reset above, need to get them.
         if pointer is None or prefix is None:
             prefix = self.text.get("iomark", "end-1c")
-            if reverse:
-                pointer = nhist  # will be decremented
-            else:
-                if self.cyclic:
-                    pointer = -1  # will be incremented
-                else:  # abort history_next
-                    self.text.bell()
-                    return
+            pointer = nhist  # will be decremented
 
         suggested_items = zip(*suggested)[0] if suggested else []
 
         nprefix = len(prefix)
         while 1:
-            pointer += -1 if reverse else 1
+            pointer -= 1
 
             # Is it the end of the line?
             if pointer < 0 or pointer >= nhist:
@@ -134,7 +133,7 @@ class History(object):
                 break
 
             # Check the line for a match.
-            real_pointer, item = self.super_history[pointer]
+            real_pointer, item = history[pointer]
 
             if item not in suggested_items and item[:nprefix] == prefix and len(item) > nprefix:
                 self.text.delete("iomark", "end-1c")
@@ -167,10 +166,7 @@ class History(object):
             self.histwin.store(source)
 
             self.super_history = list(enumerate(history))
-            for i in range(len(history) - 1, 0, -1):
-                if history[i - 1] == source:
-                    self.super_history.append((i, history[i]))
-                    break
+            self.smart_history = [(i, line) for i, line in enumerate(history[1:], 1) if history[i - 1] == source]
 
         self.pointer = None
         self.prefix = None

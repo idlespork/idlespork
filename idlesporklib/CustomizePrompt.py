@@ -44,7 +44,11 @@ class CustomizePrompt(object):
             self_.set_line_and_column()
             self_.io.reset_undo()
 
-        old_runcmd_from_source = editwin.interp.runcmd_from_source
+        try:
+            old_runcmd_from_source = editwin.interp.runcmd_from_source
+        # In case it's a file editor window.
+        except AttributeError:
+            return
 
         def runcmd_from_source(self_, line):
             CustomizePrompt.last_prompt = time.time()
