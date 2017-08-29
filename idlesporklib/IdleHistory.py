@@ -114,7 +114,7 @@ class History(object):
         suggested_items = zip(*suggested)[0] if suggested else []
 
         nprefix = len(prefix)
-        while 1:
+        while True:
             pointer -= 1
 
             # Is it the end of the line?
@@ -153,14 +153,6 @@ class History(object):
         history = self.history
 
         if len(source) > 0:
-            # don't avoid duplicates
-            # try:
-            #     idx = self.history.index(source)
-            #     del self.history[idx]
-            #     self.histwin.remove(idx)
-            #     self.ph.remove(source)
-            # except ValueError:
-            #     pass
             history.append(source)
             self.ph.append(source)
             self.histwin.store(source)
