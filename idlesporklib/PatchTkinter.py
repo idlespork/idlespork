@@ -4,50 +4,41 @@ from __future__ import print_function
 # This module tries to prevent the horrible bug.
 #
 
+import threading
+import random
+import time
+from threading import Thread
+from types import MethodType
+
+# noinspection PyCompatibility
+from Queue import Queue, Empty
 
 # noinspection PyCompatibility
 import Tkinter
-# import _tkinter
-import threading
-# import matplotlib
-# matplotlib.use('agg')
-# noinspection PyCompatibility
-from Queue import Queue
-from matplotlib import pyplot as plt
-import random
-import time
-from matplotlib.backends.backend_tkagg import NavigationToolbar2TkAgg
-from types import MethodType
 
 from idlesporklib.EnablableExtension import boundremotefunc
 
-dont_delete_yet = Queue()
 
-
-# oldcreate = _tkinter.create
-#
-#
-# def newcreate(*args, **kwargs):
-#     ret = oldcreate(*args, **kwargs)
-#     dont_delete_yet.put(ret)
-#     print("saved reference to:", ret)
-#     return ret
-#
-#
-# _tkinter.create = newcreate
+# Queues for objects not to delete yet.
+# Experimentation has shown that trying to delete a Tk object will always fail, so we'll simply keep them.
+_delete_photos_queue = Queue()
+_delete_tk_queue = Queue()
 
 
 class PatchTkinter(object):
+    """Module to prevent shell crashes caused by Tkinter deletes in wrong thread."""
     def __init__(self, editwin=None):
+        # Patch if editwin is an interpreter window.
         if editwin is not None and hasattr(editwin, 'interp'):
             self.editwin = editwin
+            # Register to patch when shell is restarted.
             editwin.interp.register_onrestart(self._loop_init)
             self._loop_init()
 
     def _loop_init(self):
+        """Wait until rpc is up and running."""
         try:
-            rpc = self.editwin.flist.pyshell.interp.rpcclt
-            notyet = False
+            notyet = not hasattr(self.editwin.flist.pyshell.interp, "rpcclt")
         except AttributeError:
             notyet = True
 
@@ -56,42 +47,52 @@ class PatchTkinter(object):
 
     @boundremotefunc
     def _remote_init(self):
+        """Patch Tkinter delete functions. This happens in rpc."""
         try:
-            print("patching Tkinter delete functions")
             old_del = Tkinter.PhotoImage.__del__
 
-            def newdel(self_):
-                global dont_delete_yet
+            def delete_photoimage(self_):
+                """Deletes PhotoImage only if in main thread, otherwise queues to be deleted."""
+                global _delete_photos_queue
                 # noinspection PyProtectedMember
                 if isinstance(threading.current_thread(), threading._MainThread):
                     old_del(self_)
                 else:
-                    if dont_delete_yet:
-                        dont_delete_yet.put(self_)
+                    if _delete_photos_queue:
+                        _delete_photos_queue.put(self_)
 
-            Tkinter.PhotoImage.__del__ = newdel
+            # Replace PhotoImage delete method.
+            Tkinter.PhotoImage.__del__ = delete_photoimage
 
-            def newdel2(self_):
-                global dont_delete_yet
+            def delete_tk(self_):
+                """Deletes Tk only if in main thread, otherwise queues to be deleted."""
+                global _delete_photos_queue
                 # noinspection PyProtectedMember
                 if not isinstance(threading.current_thread(), threading._MainThread):
-                    if dont_delete_yet:
-                        dont_delete_yet.put(self_)
+                    if _delete_photos_queue:
+                        _delete_tk_queue.put(self_)
 
-            Tkinter.Tk.__del__ = newdel2
+            Tkinter.Tk.__del__ = delete_tk
+
+            from idlesporklib.run import MainThreadCaller
+
+            # This is a method that we know is called from main thread.
+            old_wait_for_call = MainThreadCaller.wait_for_call
+
+            def new_wait_for_call(timeout):
+                """New wait_for_call tries to delete queued PhotoImages."""
+                try:
+                    while True:
+                        _delete_photos_queue.get_nowait()
+                except Empty:
+                    pass
+
+                return old_wait_for_call(timeout)
+
+            MainThreadCaller.wait_for_call = new_wait_for_call
+
+            print("Patched Tkinter delete functions.")
+
             return True
-        except:
+        except AttributeError:
             return False
-
-
-# def shimi():
-#     time.sleep(0.1)
-#     z = plt.plot([random.randint(1,1000000)])
-#     plt.close()
-#
-# for i in range(1000):
-#     threading.Thread(target=shimi).start()
-#
-# print("done, now sleeping a bit")
-# time.sleep(10)
-# print("ok bye")

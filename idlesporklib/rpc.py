@@ -228,11 +228,11 @@ class SocketIO(object):
             cvar = threading.Condition()
             self.cvars[seq] = cvar
         self.debug(("asynccall:%d:" % seq), oid, methodname, args, kwargs)
-        if args == ('Exception ', 'stderr') or 'Tk' in globals():
-            import traceback
-            self.debug('\n'.join(map(str, traceback.extract_stack())))
-            import pdb
-            pdb.set_trace()
+        # if args == ('Exception ', 'stderr') or 'Tk' in globals():
+        #     import traceback
+        #     self.debug('\n'.join(map(str, traceback.extract_stack())))
+        #     import pdb
+        #     pdb.set_trace()
         self.putmessage((seq, request))
         return seq
 

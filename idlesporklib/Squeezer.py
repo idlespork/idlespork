@@ -6,8 +6,6 @@ Squeezer - using this extension will make long texts become a small button.
 """
 
 import re
-from Tkinter import TclError
-
 from PyShell import PyShell
 from configHandler import idleConf
 import Tkinter
@@ -407,12 +405,8 @@ class Squeezer:
                                 padx=3, pady=5)
         # insert the ExpandingButton to the list of ExpandingButtons
         i = len(self.expandingbuttons)
-        while i > 0:
-            try:
-                if self.text.compare(self.expandingbuttons[i-1], ">", expandingbutton):
-                    i -= 1
-            except TclError:
-                break
+        while i > 0 and self.text.compare(self.expandingbuttons[i-1], ">", expandingbutton):
+            i -= 1
         self.expandingbuttons.insert(i, expandingbutton)
         return True
 
