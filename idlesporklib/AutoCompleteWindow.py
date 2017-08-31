@@ -426,7 +426,6 @@ class AutoCompleteWindow:
     def hide_window(self):
         import sys
         import threading
-        print>>sys.__stderr__, '%s AutoComplete hide_window' % str(threading.currentThread().getName())
         if not self.is_active():
             return
 

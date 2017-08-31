@@ -77,4 +77,5 @@ def boundremotefunc(func):
             return rpcclt.run_extension_function(self.__class__.__name__, func.__name__, args, kwargs)
         else:
             return func(self, *args, **kwargs)
+    new_func.orig_func = func
     return new_func

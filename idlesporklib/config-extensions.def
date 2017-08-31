@@ -99,6 +99,9 @@ enable_editor=True
 enable=True
 prompt-format=>>>
 
+[PatchTkinter]
+enable=False
+
 [ScriptBinding]
 enable=True
 enable_shell=False

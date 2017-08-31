@@ -515,7 +515,7 @@ class RemoteProxy(object):
 
 class RPCHandler(SocketServer.BaseRequestHandler, SocketIO):
 
-    debugging = True
+    debugging = False
     location = "#S"  # Server
 
     def __init__(self, sock, addr, svr):
@@ -532,7 +532,7 @@ class RPCHandler(SocketServer.BaseRequestHandler, SocketIO):
 
 class RPCClient(SocketIO):
 
-    debugging = True
+    debugging = False
     location = "#C"  # Client
 
     nextseq = 1 # Requests coming from the client are odd numbered
