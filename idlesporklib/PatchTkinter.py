@@ -49,20 +49,25 @@ class PatchTkinter(object):
     def _remote_init(self):
         """Patch Tkinter delete functions. This happens in rpc."""
         try:
-            old_del = Tkinter.PhotoImage.__del__
+            old_photoimage = Tkinter.PhotoImage
 
-            def delete_photoimage(self_):
-                """Deletes PhotoImage only if in main thread, otherwise queues to be deleted."""
-                global _delete_photos_queue
-                # noinspection PyProtectedMember
-                if isinstance(threading.current_thread(), threading._MainThread):
-                    old_del(self_)
-                else:
-                    if _delete_photos_queue:
-                        _delete_photos_queue.put(self_)
+            class NewPhotoImage(old_photoimage):
+                def __init__(self_, *args, **kwargs):
+                    self_._my_thread = threading.currentThread()
+                    old_photoimage.__init__(self_, *args, **kwargs)
+
+                def __del__(self_):
+                    """Deletes PhotoImage only if in main thread, otherwise queues to be deleted."""
+                    global _delete_photos_queue
+                    # noinspection PyProtectedMember
+                    if threading.current_thread() is self_._my_thread:
+                        old_photoimage.__del__(self_)
+                    else:
+                        if _delete_photos_queue:
+                            _delete_photos_queue.put(self_)
 
             # Replace PhotoImage delete method.
-            Tkinter.PhotoImage.__del__ = delete_photoimage
+            Tkinter.PhotoImage = NewPhotoImage
 
             def delete_tk(self_):
                 """Deletes Tk only if in main thread, otherwise queues to be deleted."""
