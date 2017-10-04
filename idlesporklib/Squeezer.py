@@ -8,8 +8,13 @@ Squeezer - using this extension will make long texts become a small button.
 import re
 from PyShell import PyShell
 from configHandler import idleConf
-import Tkinter
-import tkFont
+import Links
+try:
+    import Tkinter
+    import tkFont
+except ImportError:
+    import tkinter as Tkinter
+    from tkinter import font as tkFont
 import os
 
 
@@ -99,13 +104,14 @@ def tags_in_range(text, start, end):
 # define the extension's classes
 
 class ExpandingButton(Tkinter.Button):
-    def __init__(self, s, tags, numoflines, squeezer, def_line=None, rangetags=()):
+    def __init__(self, s, tags, numoflines, squeezer, def_line=None, rangetags=(), check_links=False):
         self.s = s
         self.tags = tags
         self.squeezer = squeezer
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
         self.rangetags = rangetags
+        self.check_links = check_links
 
         # If this is for a stdin area, we should remember the line just before so it will appear in preview and copy.
         self.def_line = def_line
@@ -148,6 +154,11 @@ class ExpandingButton(Tkinter.Button):
         start = self.text.index(self)
         basetext.insert(start, expanded_txt, self.tags)
 
+        if self.check_links:
+            Links.parse(basetext, "%d.0" % (int(self.text.index(self).split('.')[0]) - len(expanded_txt.split('\n'))),
+                        self.text.index(self))
+            self.check_links = False
+
         if self.rangetags:
             for name, i0, i1, in self.rangetags:
                 basetext.tag_add(name, start + '+%dc' % i0, start + '+%dc+%dc' % (i0, i1))
@@ -168,14 +179,14 @@ class ExpandingButton(Tkinter.Button):
         
     def copy(self, event):
         self.clipboard_clear()
-        self.clipboard_append(self.copypreview_txt(), type='STRING')
+        self.clipboard_append(Links.replace_links(self.copypreview_txt()), type='STRING')
         self.selection_own()
 
     def preview(self, event):
         from tempfile import mktemp
         fn = mktemp("longidletext")
         f = open(fn, "w")
-        f.write(self.copypreview_txt())
+        f.write(Links.replace_links(self.copypreview_txt()))
         f.close()
         os.system(self.squeezer._PREVIEW_COMMAND % {"fn":fn})
             
@@ -233,6 +244,10 @@ class Squeezer:
 
         
     def __init__(self, editwin):
+        """
+        Args:
+            editwin (PyShell): pyshell window.
+        """
         self.editwin = editwin
         self.text = text = editwin.text
         self.expandingbuttons = []
@@ -247,8 +262,7 @@ class Squeezer:
                     if numoflines < self._MAX_NUM_OF_LINES:
                         return write(s, tags)
                     else:
-                        expandingbutton = ExpandingButton(s, tags, numoflines,
-                                                          self)
+                        expandingbutton = ExpandingButton(s, tags, numoflines, self, check_links=True)
                         text.mark_gravity("iomark", Tkinter.RIGHT)
                         text.window_create("iomark",window=expandingbutton,
                                            padx=3, pady=5)
