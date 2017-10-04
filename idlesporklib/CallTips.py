@@ -71,12 +71,18 @@ class CallTips:
         hp = HyperParser(self.editwin, "insert")
         sur_paren = hp.get_surrounding_brackets('(')
         if not sur_paren:
-            self.calltip.hidetip()
+            try:
+                self.calltip.hidetip()
+            except AttributeError:
+                pass
             return
         hp.set_index(sur_paren[0])
         expression = hp.get_expression()
         if self.calltip and not expression or (not evalfuncs and expression.find('(') != -1):
-            self.calltip.hidetip()
+            try:
+                self.calltip.hidetip()
+            except AttributeError:
+                pass
             return
         arg_text = self.fetch_tip(expression)
         if self.calltip and not arg_text:
