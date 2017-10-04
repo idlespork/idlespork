@@ -1,6 +1,8 @@
+from __future__ import print_function
 """Implement Idle Shell history mechanism with History class"""
 
 import os
+from types import MethodType
 
 from idlesporklib.configHandler import idleConf
 from idlesporklib.IdlePrehistory import Prehistory
@@ -22,7 +24,7 @@ class History(object):
     history_next - Bound to <<history-next>> event (default Alt-N).
     history_prev - Bound to <<history-prev>> event (default Alt-P).
     """
-    def __init__(self, text):
+    def __init__(self, pyshell):
         """Initialize data attributes and bind event methods.
 
         .text - Idle wrapper of tk Text widget, with .bell().
@@ -30,12 +32,15 @@ class History(object):
         .prefix - source already entered at prompt; filters history list.
         .pointer - index into history.
         .cyclic - wrap around history list (or not).
+
+        @type pyshell: idlesporklib.PyShell.PyShell
         """
         if 'SPORKPATH' not in os.environ.keys():
             self.ph = Prehistory(os.path.expanduser('~'))
         else:
             self.ph = Prehistory(os.environ['SPORKPATH'])
-        self.text = text
+        self.pyshell = pyshell
+        self.text = text = pyshell.text
         self.history = self.ph.get()
         self.super_history = list(enumerate(self.history))
         self.smart_history = []
@@ -58,6 +63,7 @@ class History(object):
                 self.suggested[:] = []
                 self.text.mark_set("insert", "end-1c")  # != after cursor move
 
+    # noinspection PyUnusedLocal
     def history_next(self, event):
         """Fetch later statement; start with ealiest if cyclic."""
         # self.fetch(reverse=False)
@@ -82,11 +88,13 @@ class History(object):
 
         return "break"
 
+    # noinspection PyUnusedLocal
     def history_prev(self, event):
         """Fetch earlier statement; start with most recent."""
         self.fetch(self.super_history)
         return "break"
 
+    # noinspection PyUnusedLocal
     def history_guess(self, event):
         self.fetch(self.smart_history)
         return "break"
@@ -147,6 +155,11 @@ class History(object):
         self.pointer = pointer
         self.prefix = prefix
 
+    def update_smart_history(self, source):
+        source = source.strip()
+        self.smart_history = [(i, line.strip())
+                              for i, line in self.super_history if self.super_history[i - 1][1].strip() == source]
+
     def store(self, source):
         """Store Shell input statement into history list."""
         source = source.strip()
@@ -158,7 +171,7 @@ class History(object):
             self.histwin.store(source)
 
             self.super_history = list(enumerate(history))
-            self.smart_history = [(i, line) for i, line in enumerate(history[1:], 1) if history[i - 1] == source]
+            self.update_smart_history(source)
 
         self.pointer = None
         self.prefix = None

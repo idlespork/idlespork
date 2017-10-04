@@ -909,7 +909,6 @@ Returns True if the caller should run endexecuting, and False otherwise"""
         return Links.create_link_local(link)
 
 class PyShell(OutputWindow):
-
     shell_title = "Idlespork"
 
     # Override classes
@@ -979,7 +978,7 @@ class PyShell(OutputWindow):
             sys.stderr = self.stderr
             sys.stdin = self.stdin
         #
-        self.history = History(self.text)
+        self.history = History(self)
         self.histwin.attach_history(self.text, self.history)
         #
         self.pollinterval = 50  # millisec

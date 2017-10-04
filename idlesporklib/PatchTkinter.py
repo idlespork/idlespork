@@ -8,7 +8,6 @@ import threading
 import random
 import time
 from threading import Thread
-from types import MethodType
 
 # noinspection PyCompatibility
 from Queue import Queue, Empty
@@ -52,6 +51,7 @@ class PatchTkinter(object):
             old_photoimage = Tkinter.PhotoImage
 
             class NewPhotoImage(old_photoimage):
+                # noinspection PyMissingConstructor
                 def __init__(self_, *args, **kwargs):
                     self_._my_thread = threading.currentThread()
                     old_photoimage.__init__(self_, *args, **kwargs)
