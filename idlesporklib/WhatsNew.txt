@@ -74,4 +74,17 @@ ResourceStatus -
     When enabled, a new timer now shows in the status bar for every run statement. It's just a nice small addition.
 
 
+AutoComplete -
+    Added option to show lengths of tuples/lists/numpy.ndarrays.
+
+    Example:
+        >>> [1, 2, 3][
+        [hit autocomplete key, and see tooltip `list[0:3]`]
+        >>> import numpy as np
+        >>> np.random.randn(10, 4, 7)[
+        [hit autocomplete key, and see tooltip `ndarray((10, 4, 7), dtype=float64)`]
+
+    Note that pressing the `force-open-completions` always runs some code, so be careful to run something heavy.
+
+
 Bug Fixes - some bug fixes.
