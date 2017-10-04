@@ -1,4 +1,5 @@
 from __future__ import print_function
+# This module contains benchmark functions for different history suggestions algorithms.
 
 import os
 from multiprocessing import Pool

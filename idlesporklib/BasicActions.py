@@ -79,18 +79,22 @@ class BasicActions:
         return "break"
 
     def move_word_left_event(self, event):
+        """Moves cursor a word left like SublimeText would"""
         # return self.pos_word_left(False)
         return self.sublime_pos_word_left(False, False)
 
     def sel_word_left_event(self, event):
+        """Selects a word to the left like SublimeText would"""
         return self.sublime_pos_word_left(True, False)
         # return self.pos_word_left(True)
 
     def move_subword_left_event(self, event):
+        """Moves cursor a subword left like SublimeText would"""
         # return self.pos_word_left(False)
         return self.sublime_pos_word_left(False, True)
 
     def sel_subword_left_event(self, event):
+        """Selects a subword to the left like SublimeText would"""
         return self.sublime_pos_word_left(True, True)
         # return self.pos_word_left(True)
 
@@ -172,18 +176,22 @@ class BasicActions:
         return "break"
 
     def move_word_right_event(self, event):
+        """Moves cursor a word to the right like SublimeText would"""
         return self.sublime_pos_word_right(False, False)
         # return self.pos_word_right(False)
 
     def sel_word_right_event(self, event):
+        """Selects a word to the right like SublimeText would"""
         return self.sublime_pos_word_right(True, False)
         # return self.pos_word_right(True)
 
     def move_subword_right_event(self, event):
+        """Moves cursor a subword to the right like SublimeText would"""
         return self.sublime_pos_word_right(False, True)
         # return self.pos_word_right(False)
 
     def sel_subword_right_event(self, event):
+        """Selects a subword to the right like SublimeText would"""
         return self.sublime_pos_word_right(True, True)
         # return self.pos_word_right(True)
 
