@@ -470,6 +470,10 @@ class ModifiedInterpreter(InteractiveInterpreter):
         """Register a function to be called on shell restart"""
         self.onrestart_funcs.add(func)
 
+    def unregister_onrestart(self, func):
+        """Unegister a function from being called on shell restart"""
+        self.onrestart_funcs.remove(func)
+
     def restart_subprocess(self, with_cwd=False, filename=''):
         if self.restarting:
             return self.rpcclt

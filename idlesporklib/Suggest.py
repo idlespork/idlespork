@@ -30,6 +30,7 @@ def exception_suggest(typ, val, tb, source, filename):
             _spelling_suggest_attr_error(undefname, source, \
                 last_trace, filename)
             
+
 def import_suggest(name, source):
     try:
         fl, path, desc = imp.find_module(name)

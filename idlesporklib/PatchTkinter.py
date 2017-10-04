@@ -96,7 +96,7 @@ class PatchTkinter(object):
 
             MainThreadCaller.wait_for_call = new_wait_for_call
 
-            print("Patched Tkinter delete functions.")
+            print("Patched Tkinter delete functions. ")
 
             return True
         except AttributeError:
