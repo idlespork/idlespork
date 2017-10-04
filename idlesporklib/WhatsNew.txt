@@ -5,7 +5,7 @@ What's New
 
 History Guess -
     There's a new configurable key called "history-guess". When pressed, it tries to complete current line
-    bases on the previous line. Dror hopes to work on this feature more and significantly reduce the amount of
+    based on the previous line. Dror hopes to work on this feature more and significantly reduce the amount of
     typing we all do while working. Defaults to Control-P on Linux.
 
     Example:
@@ -84,7 +84,7 @@ AutoComplete -
         >>> np.random.randn(10, 4, 7)[
         [hit autocomplete key, and see tooltip `ndarray((10, 4, 7), dtype=float64)`]
 
-    Note that pressing the `force-open-completions` always runs some code, so be careful to run something heavy.
+    Note that pressing the `force-open-completions` always runs some code, so be careful not to run something heavy.
 
 
 Bug Fixes - some bug fixes.
