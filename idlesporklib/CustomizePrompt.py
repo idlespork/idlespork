@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 
+import sys
 import time
 from types import MethodType
 
@@ -39,6 +40,7 @@ class CustomizePrompt(object):
 
             self_.resetoutput()
             s = time.strftime(s + ' ')
+            sys.ps1 = s
             self_.console.write(s)
             self_.text.mark_set("insert", "end-1c")
             self_.set_line_and_column()
