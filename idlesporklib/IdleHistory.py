@@ -96,6 +96,7 @@ class History(object):
 
     # noinspection PyUnusedLocal
     def history_guess(self, event):
+        """Guess next line based on previous line."""
         self.fetch(self.smart_history)
         return "break"
 

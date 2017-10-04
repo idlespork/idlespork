@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 from __future__ import print_function
 
+import inspect
 import os
 import os.path
 import sys
@@ -1125,9 +1126,13 @@ class PyShell(OutputWindow):
                 self.close()
                 return False
         else:
-            nosub = "==== No Subprocess ===="
-        self.write("Python %s on %s\n%s\n%s" %
-                   (sys.version, sys.platform, self.COPYRIGHT, nosub))
+            nosub = "==== No Subprocess ====\n"
+
+        whatsnew_path = os.path.join(os.path.dirname(inspect.getfile(PyShell)), 'WhatsNew.txt')
+        link = Links.create_link_local(Links.FileLink(self, 'WhatsNew.txt', whatsnew_path, 0))
+
+        self.write("Python %s on %s\n%s\n%sTo see what's new in Idlespork open %s\n" %
+                   (sys.version, sys.platform, self.COPYRIGHT, nosub, link))
         self.text.focus_force()
         self.showprompt()
         import Tkinter

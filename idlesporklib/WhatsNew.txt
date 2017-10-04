@@ -1,0 +1,77 @@
+What's New
+--------------------------------------
+
+(4th October 2017)
+
+History Guess -
+    There's a new configurable key called "history-guess". When pressed, it tries to complete current line
+    bases on the previous line. Dror hopes to work on this feature more and significantly reduce the amount of
+    typing we all do while working. Defaults to Control-P on Linux.
+
+    Example:
+        >>> x = 1
+        >>> y = 2
+        >>> z = 3
+        [... more code ...]
+        >>> x = 1
+        [press history-guess, and the following is automatically completed]
+        >>> y = 2
+        [press history-guess again, and the following is automatically completed]
+        >>> z = 3
+
+    Amazing.
+
+
+SmartSuggest -
+    A new extension that chaches all symbols in all modules from all pythons path directories. Once initialized,
+    module/class/function suggestions include symbols that aren't imported. Simply enable from config dialog.
+
+    Example:
+        >>> walk('my_dir')
+        Traceback (most recent call last):
+          File "<pyshell#0>", line 1, in <interactive>
+            walk
+        NameError: name 'walk' is not defined
+
+        Here are some import suggestions:
+        (F) from ast import walk
+        (F) from os import walk
+
+    The words are links, so you can just move cursor to the right symbol with keystrokes and press enter to import.
+
+
+PatchTkinter -
+    New extension to safeguard from Tkinter crashes. It turns out that Tkinter and threads and stuff don't work
+    so well. This extension replaces some delete function in Tkinter classes, hoping to prevent them from being
+    called from the wrong thread. This has been working on Dror's computer for much success for about a month.
+    Simply enable from config dialog.
+
+
+SublimeText Word Jumping -
+    Moving (sub)words to the left/right using Control/Alt keys is now similar to the use case in the SublimeText
+    editor. Ofir asked for this, and it really makes more sense. The keys are configurable in the config dialog.
+
+
+CustomizePrompt -
+    An extension that allows the prompt, i.e. ">>>", to be changed. The format is configurable from the config dialog,
+    with more information there.
+
+    Examples:
+        Setting `prompt-format` to "[%H:%M:%S]" shows the time when the prompt was printed:
+        [19:53:05] sum(i for i in range(100000000))
+        4999999950000000
+        [19:53:39]
+
+        Setting `prompt-format` to "[%dM:%dS.%df]" shows how much time the last statement took:
+        [00:00.00] sum(i for i in range(100000000))
+        ... 4999999950000000
+        [00:04.75]
+
+        It took 5.75 seconds to compute! Gauss would be faster.
+
+
+ResourceStatus -
+    When enabled, a new timer now shows in the status bar for every run statement. It's just a nice small addition.
+
+
+Bug Fixes - some bug fixes.

@@ -5,6 +5,7 @@ import time
 from types import MethodType
 from Tkinter import RIGHT
 from idlesporklib.EnablableExtension import EnablableExtension
+from idlesporklib import Commands
 
 try:
     import psutil
@@ -23,18 +24,34 @@ class ResourcesStatus(EnablableExtension):
     last_exec = None
 
     def __init__(self, editwin):
+        """
+        Args:
+            editwin (PyShell): pyshell.
+        """
         if psutil is not None:
             self.editwin = editwin
             self.text = self.editwin.text
             try:
-                interp = self.editwin.interp
+                # interp = self.editwin.interp
+                #
+                # old_runcmd_from_source = editwin.interp.runcmd_from_source
 
-                old_runcmd_from_source = editwin.interp.runcmd_from_source
-
-                def runcmd_from_source(self_, line):
+                def runcmd_from_source(self_, source):
+                    console = self_.tkconsole
+                    try:
+                        cmd = Commands.parse(self_, source)
+                    except Exception as e:
+                        console.beginexecuting()
+                        print(str(e), file=console.stderr)
+                        console.endexecuting()
+                        return
+                    if cmd is None:
+                        return
                     ResourcesStatus.last_exec = time.time()
-                    ret = old_runcmd_from_source(line)
-                    return ret
+                    console.query_prompt()
+                    console.beginexecuting()
+                    if self_.runcmd(cmd):
+                        console.endexecuting()
 
                 editwin.interp.runcmd_from_source = MethodType(runcmd_from_source, editwin.interp)
 
