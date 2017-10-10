@@ -15,7 +15,7 @@ from Queue import Queue, Empty
 # noinspection PyCompatibility
 import Tkinter
 
-from idlesporklib.EnablableExtension import boundremotefunc
+from idlesporklib.EnablableExtension import remoteboundmethod
 
 
 # Queues for objects not to delete yet.
@@ -44,7 +44,7 @@ class PatchTkinter(object):
         if notyet or not self._remote_init():
             self.editwin.text.after_idle(self._loop_init)
 
-    @boundremotefunc
+    @remoteboundmethod
     def _remote_init(self):
         """Patch Tkinter delete functions. This happens in rpc."""
         try:

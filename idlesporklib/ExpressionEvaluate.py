@@ -7,7 +7,7 @@ import textwrap
 
 import CallTipWindow
 from configHandler import idleConf
-from idlesporklib.EnablableExtension import EnablableExtension, boundremotefunc
+from idlesporklib.EnablableExtension import EnablableExtension, remoteboundmethod
 
 _MAX_TYPE_STRING_LEN = 20
 _MAX_COLS = 85
@@ -91,7 +91,7 @@ class ExpressionEvaluate(EnablableExtension):
             calltip = self._evaluate_expression2((expression, start, end))[-1]
             self.text.after(max(100, self.updatedelay), self.updatetip, (expression, start, end, calltip))
 
-    @boundremotefunc
+    @remoteboundmethod
     def fetch_tip(self, expression):
         if expression:
             namespace = sys.modules.copy()

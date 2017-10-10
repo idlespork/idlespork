@@ -12,7 +12,7 @@ import PyShell
 from configHandler import idleConf
 from CallTipWindow import CallTip
 from idlesporklib.ModuleCompletion import ModuleCompletion
-from idlesporklib.EnablableExtension import boundremotefunc
+from idlesporklib.EnablableExtension import remoteboundmethod
 
 # This string includes all chars that may be in a file name (without a path
 # separator)
@@ -389,7 +389,7 @@ class AutoComplete:
         namespace.update(__main__.__dict__)
         return eval(name, namespace)
 
-    @boundremotefunc
+    @remoteboundmethod
     def get_module_completion(self, line):
         """Get module completions for the line"""
         return ModuleCompletion.module_completion(line)

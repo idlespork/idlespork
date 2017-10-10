@@ -1,25 +1,48 @@
 from collections import deque
 
 from idlesporklib.configHandler import idleConf
-from idlesporklib.EnablableExtension import boundremotefunc
+from idlesporklib.EnablableExtension import remoteboundmethod, EnablableExtension, boundguifunc, remoteclassmethod
 
 
-class OutHist:
+class OutHist(EnablableExtension):
     """
     Extension to save outputs history
 
-    Creates a variable OutHist in the namespace
+    Creates a variable OutHist in the namespace. Set `histsize` to 0 for unlimited history.
     """
+    class __metaclass__(EnablableExtension.__metaclass__):
+        _index_by_previous_line = idleConf.GetOption("extensions", "OutHist",
+                                                  "index_by_previous_line", type="bool", default=False,
+                                                     member_name='index_by_previous_line')
+        just_changed = False
+
+        @property
+        def index_by_previous_line(cls):
+            return cls._index_by_previous_line
+
+        @index_by_previous_line.setter
+        def index_by_previous_line(cls, value):
+            cls._index_by_previous_line = value
+            cls.set_index_by_previous_line(value)
+
+    @remoteclassmethod
+    def set_index_by_previous_line(cls, value):
+        if not value:
+            cls.just_changed = True
+        OutHist._index_by_previous_line = value
 
     # Size of history.
-    _histsize = idleConf.GetOption("extensions", "OutHist",
-                                   "histsize", type="int", default=10)
+    # _histsize = idleConf.GetOption("extensions", "OutHist",
+    #                                "histsize", type="int", default=10)
 
-    history = deque(maxlen=_histsize)
+    history = {}
+    cursor = 1
 
     def __init__(self, editwin=None):
         if editwin is not None and hasattr(editwin, 'interp'):
             self.editwin = editwin
+            if OutHist.index_by_previous_line:
+                OutHist.cursor = 0
             self.editwin.interp.register_onrestart(self._loop_init)
             self._loop_init()
 
@@ -33,7 +56,7 @@ class OutHist:
         if notyet or not self._remote_init():
             self.editwin.text.after_idle(self._loop_init)
 
-    @boundremotefunc
+    @remoteboundmethod
     def _remote_init(self):
         try:
             import sys
@@ -42,16 +65,29 @@ class OutHist:
 
             def displayhook(val):
                 if val is not None and val is not OutHist.history:
-                    OutHist.history.append(val)
+                    OutHist.history[OutHist.cursor] = val
+
+                if OutHist.index_by_previous_line:
+                    self.set_cursor(OutHist.cursor)
+                    OutHist.cursor += 1
+                else:
+                    if OutHist.just_changed:
+                        OutHist.just_changed = False
+                    else:
+                        OutHist.cursor += 1
+                    self.set_cursor(OutHist.cursor)
+
                 old_displayhook(val)
 
             sys.displayhook = displayhook
             from idlesporklib.run import World
-            World.executive.runcode("from idlesporklib.OutHist import OutHist")
+            World.executive.runcode("from idlesporklib.OutHist import OutHist as __OutHist")
+            World.executive.runcode("Out = __OutHist.history")
+            World.executive.runcode("del __OutHist")
             return True
         except AttributeError:
             return False
 
-    @staticmethod
-    def clear():
-        OutHist.history = deque(maxlen=OutHist._histsize)
+    @boundguifunc
+    def set_cursor(self, cursor):
+        OutHist.cursor = cursor

@@ -44,7 +44,7 @@ class EnablableExtension(object):
                 del win.extensions[name]
 
 
-def boundremotefunc(func):
+def remoteboundmethod(func):
     """
     Decorator for class methods that should be called in the subprocess
 
@@ -79,3 +79,45 @@ def boundremotefunc(func):
             return func(self, *args, **kwargs)
     new_func.orig_func = func
     return new_func
+
+
+def remoteclassmethod(func):
+    """
+    Decorator for class methods that should be called in subprocess.
+
+    Example:
+        >>> class InlineMatplotlib(object):
+        ...     @remoteclassmethod
+        ...     def some_class_method(cls, value):
+        ...         InlineMatplotlib.set_the_global_value = value
+    """
+    def new_func(cls, *args, **kwargs):
+        try:
+            from idlesporklib.PyShell import flist
+            rpcclt = flist.pyshell.interp.rpcclt
+        except (AttributeError, ImportError):
+            rpcclt = None
+
+        if rpcclt:
+            return rpcclt.run_extension_function(cls.__name__, func.func_name, args, kwargs)
+        else:
+            return func(cls, *args, **kwargs)
+    new_func.orig_func = func
+    return classmethod(new_func)
+
+
+def boundguifunc(func):
+    def new_func(self, *args, **kwargs):
+        try:
+            rpcclt = self.editwin.flist.pyshell.interp.rpcclt
+        except AttributeError:
+            rpcclt = None
+
+        if rpcclt is None:
+            from idlesporklib.run import World
+            return World.interp.run_extension_function(self.__class__.__name__, func.__name__, args, kwargs)
+        else:
+            return func(self, *args, **kwargs)
+    new_func.orig_func = func
+    return new_func
+

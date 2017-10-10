@@ -913,6 +913,23 @@ Returns True if the caller should run endexecuting, and False otherwise"""
         link.gui = self.tkconsole
         return Links.create_link_local(link)
 
+    def run_extension_function(self, __run_extension_function__ext_name, __run_extension_function__func_name,
+                               args, kwargs):
+        """Helper function for remote calls from extensions"""
+        ext_name, func_name = __run_extension_function__ext_name, __run_extension_function__func_name
+        try:
+            global flist
+            inst = flist.pyshell.extensions.get(ext_name)
+            if inst is None:
+                from configHandler import IdleConf
+                # Get extension class, instantiate, and call function.
+                cls = getattr(__import__(ext_name, globals(), locals(), []), ext_name, None)
+                self.extensions[ext_name] = inst = cls()
+            return getattr(inst, func_name)(*args, **kwargs)
+        except Exception as e:
+            return e
+
+
 class PyShell(OutputWindow):
     shell_title = "Idlespork"
 

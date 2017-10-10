@@ -2,7 +2,7 @@ from __future__ import print_function
 import sys
 
 from idlesporklib import Suggest
-from idlesporklib.EnablableExtension import EnablableExtension, boundremotefunc
+from idlesporklib.EnablableExtension import EnablableExtension, remoteboundmethod
 import re
 
 import os
@@ -54,14 +54,14 @@ class SmartSuggest(EnablableExtension):
             pass
         self._close()
 
-    @boundremotefunc
+    @remoteboundmethod
     def _close(self):
         SmartSuggest.allobjs = None
         SmartSuggest.executing_patch = False
         SmartSuggest.patched = False
         Suggest.import_suggest = _old_import_suggest
 
-    @boundremotefunc
+    @remoteboundmethod
     def _patch_suggestions(self):
         from threading import Thread
         Thread(target=SmartSuggest.patch_suggestions).start()

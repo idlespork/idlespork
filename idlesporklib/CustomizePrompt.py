@@ -5,6 +5,7 @@ import time
 from types import MethodType
 
 from idlesporklib.configHandler import idleConf
+from idlesporklib.OutHist import OutHist
 
 
 class CustomizePrompt(object):
@@ -37,6 +38,9 @@ class CustomizePrompt(object):
             s = s.replace('%dM', '%02d' % mins)
             s = s.replace('%dS', '%02d' % wsecs)
             s = s.replace('%df', '%02d' % ms)
+
+            if '%OutIndex' in s and OutHist.enable:
+                s = s.replace('%OutIndex', str(OutHist.cursor))
 
             self_.resetoutput()
             s = time.strftime(s + ' ')

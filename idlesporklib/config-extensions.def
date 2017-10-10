@@ -134,7 +134,7 @@ updatedelay=1000
 
 [OutHist]
 enable=False
-histsize=10
+index_by_previous_line=False
 
 [Squeezer]
 enable=True
