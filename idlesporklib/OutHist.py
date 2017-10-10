@@ -39,10 +39,9 @@ class OutHist(EnablableExtension):
     cursor = 1
 
     def __init__(self, editwin=None):
+        OutHist.cursor = 0 if OutHist.index_by_previous_line else 1
         if editwin is not None and hasattr(editwin, 'interp'):
             self.editwin = editwin
-            if OutHist.index_by_previous_line:
-                OutHist.cursor = 0
             self.editwin.interp.register_onrestart(self._loop_init)
             self._loop_init()
 
