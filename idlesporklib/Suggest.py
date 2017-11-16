@@ -9,7 +9,7 @@ import traceback
 import PyParse
 from HyperParser import HyperParser
 
-__main__ = sys.modules['__main__']
+# __main__ = sys.modules['__main__']
 __builtin__ = sys.modules['__builtin__']
 softnewline = False
 
@@ -62,11 +62,12 @@ def _spelling_suggest_attr_error(name, source, last_trace, filename):
         return
 
 def _spelling_suggest(name, source, last_trace, filename, lst = None):
+    import run
     if last_trace[0] != filename:
         return
 
     if lst is None:
-        lst = dir(__main__) + dir(__builtin__)
+        lst = run.World.executive.locals.keys() + dir(__builtin__)
 
     cl = close_words(name, lst, 3)
     if len(cl) > 0:
@@ -142,5 +143,5 @@ class MiniHyperParser(HyperParser):
 def get_entity(name):
     "Lookup name in a namespace spanning sys.modules and __main.dict__"
     namespace = sys.modules.copy()
-    namespace.update(__main__.__dict__)
+    namespace.update(run.World.executive.locals)
     return eval(name, namespace)
