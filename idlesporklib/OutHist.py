@@ -8,11 +8,12 @@ class OutHist(EnablableExtension):
     """
     Extension to save outputs history
 
-    Creates a variable OutHist in the namespace. Set `histsize` to 0 for unlimited history.
+    Creates a variable Out in the namespace, like in IPython.
+    Don't forget to enable CustomizePrompt and add %OutIndex in your prompt.
     """
     class __metaclass__(EnablableExtension.__metaclass__):
         _index_by_previous_line = idleConf.GetOption("extensions", "OutHist",
-                                                  "index_by_previous_line", type="bool", default=False,
+                                                     "index_by_previous_line", type="bool", default=False,
                                                      member_name='index_by_previous_line')
         just_changed = False
 
