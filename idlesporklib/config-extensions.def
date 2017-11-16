@@ -121,6 +121,10 @@ zoom-height=<Alt-Key-2>
 
 [BetterOutput]
 enable=True
+use-pprint=False
+
+[AutoImport]
+enable=False
 
 [MultiLineRun]
 enable=1

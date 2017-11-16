@@ -260,9 +260,9 @@ class CodeCommand(Command):
 
         if self.show_help:
             if self.show_help=='get_code':
-                print get_code(eval(self.code, world.main.__dict__))
+                print get_code(eval(self.code, world.executive.locals))
             else:
-                print helper(eval(self.code, world.main.__dict__))
+                print helper(eval(self.code, world.executive.locals))
         elif self.bg_run:
             if isinstance(self.bg_run,tuple) and self.bg_run[0]=='after':
                 jnum = world.executive.runcode_after(self.code, self.source, self.bg_run[1])

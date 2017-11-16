@@ -162,7 +162,7 @@ class SmartSuggest(EnablableExtension):
                 path = '.'
 
             if os.path.isdir(path):
-                for root, dirs, nondirs in os.walk(path, followlinks=True):
+                for root, dirs, nondirs in os.walk(path, followlinks=False):
                     if '-' in root[len(path) + 1:] or root in visited:
                         dirs[:] = []
                         continue
