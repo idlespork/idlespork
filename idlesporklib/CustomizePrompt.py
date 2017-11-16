@@ -17,6 +17,9 @@ class CustomizePrompt(object):
         %dS - seconds since last execution
 
         %df - deci-seconds since last execution
+
+        %OutIndex - output number. It relates to previous output or next depending on the `index_by_previous_line`
+            option in the OutHist extension.
     """
 
     _PROMPT_FORMAT = idleConf.GetOption("extensions", "CustomizePrompt", "prompt-format", type="str", default='>>> ',

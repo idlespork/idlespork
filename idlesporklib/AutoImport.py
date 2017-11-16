@@ -4,6 +4,7 @@ See
     https://github.com/anntzer/ipython-autoimport
 and included AutoImport_LICENSE.txt in licenses folder.
 """
+import sys
 import ast
 import importlib
 from types import ModuleType
@@ -12,6 +13,10 @@ from EnablableExtension import remoteboundmethod
 
 
 _original_dict = None
+
+
+def _report(txt):
+    sys.stderr.write('AutoImport: {}\n'.format(txt))
 
 
 def _get_import_cache(history):
@@ -78,7 +83,7 @@ def _make_submodule_autoimporter_module(module):
                 except Exception:
                     pass
                 else:
-                    print "AutoImport: import {}".format(import_target)
+                    _report("import {}".format(import_target))
                     return _make_submodule_autoimporter_module(submodule)
                 raise  # Raise AttributeError without chaining ImportError.
 
@@ -108,7 +113,7 @@ class AutoImporterMap(dict):
             imports = self._import_cache.get(name, {"import {}".format(name)})
             if len(imports) != 1:
                 if len(imports) > 1:
-                    print "AutoImport: multiple imports available for {!r}".format(name)
+                    _report("multiple imports available for {!r}".format(name))
                 raise key_error
             import_source, = imports
             try:
@@ -116,7 +121,7 @@ class AutoImporterMap(dict):
             except Exception:  # Normally, ImportError.
                 raise key_error
             else:
-                print "AutoImport: {}".format(import_source)
+                _report(import_source)
                 value = super(AutoImporterMap, self).__getitem__(name)
         if isinstance(value, ModuleType):
             return _make_submodule_autoimporter_module(value)
