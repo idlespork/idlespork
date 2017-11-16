@@ -8,6 +8,7 @@ import sys
 import string
 import keyword
 import PyShell
+import __main__
 
 from configHandler import idleConf
 from CallTipWindow import CallTip
@@ -29,7 +30,6 @@ COMPLETE_ATTRIBUTES, COMPLETE_FILES, COMPLETE_KEYS = range(1, 3+1)
 import AutoCompleteWindow
 from HyperParser import HyperParser
 
-import __main__
 
 SEPS = os.sep
 if os.altsep:  # e.g. '/' on Windows...
@@ -312,10 +312,11 @@ class AutoComplete:
             return rpcclt.remotecall("exec", "get_the_completion_list",
                                      (what, mode), {})
         else:
+            import run
             bigl = smalll = []
             if mode == COMPLETE_ATTRIBUTES:
                 if what == "":
-                    namespace = __main__.__dict__.copy()
+                    namespace = run.World.executive.locals.copy()
                     namespace.update(__main__.__builtins__.__dict__)
                     bigl = eval("dir()", namespace) + keyword.kwlist
                     bigl = sorted(set(bigl))
@@ -385,8 +386,9 @@ class AutoComplete:
 
     def get_entity(self, name):
         """Lookup name in a namespace spanning sys.modules and __main.dict__ or import module"""
+        import run
         namespace = sys.modules.copy()
-        namespace.update(__main__.__dict__)
+        namespace.update(run.World.executive.locals)
         return eval(name, namespace)
 
     @remoteboundmethod
