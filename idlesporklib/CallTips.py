@@ -5,7 +5,7 @@ parameter and docstring information when you type an opening parenthesis, and
 which disappear when you type a closing parenthesis.
 
 """
-import __main__
+# import __main__
 import re
 import sys
 import textwrap
@@ -138,8 +138,10 @@ class CallTips:
         in a namespace spanning sys.modules and __main.dict__.
         """
         if expression:
+            import run
             namespace = sys.modules.copy()
-            namespace.update(__main__.__dict__)
+            # namespace.update(__main__.__dict__)
+            namespace.update(run.World.executive.locals)
             try:
                 return eval(expression, namespace)
             except BaseException:
