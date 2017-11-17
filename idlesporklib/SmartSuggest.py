@@ -98,12 +98,12 @@ class SmartSuggest(EnablableExtension):
                                 filelink = 'BM'
 
                             if modulepath == '' or filepath == 'builtin':
-                                link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
+                                link1 = Links.ExecCodeLink(None, "%s" % word,
                                                                       "import %s" % word).create()
                                 suggestions.append(("(%s) import %s" % (filelink, link1),
                                                     "(%s) import %s" % (tag, word)))
                             else:
-                                link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
+                                link1 = Links.ExecCodeLink(None, "%s" % word,
                                                                       "from %s import %s" % (modulepath, word)).create()
                                 suggestions.append(("(%s) from %s import %s" % (filelink, modulepath, link1),
                                                     "(%s) from %s import %s" % (tag, modulepath, word)))
@@ -119,7 +119,7 @@ class SmartSuggest(EnablableExtension):
                                 filelink = Links.FileLink(None, tag, filepath, linenum + 1).create()
                             else:
                                 filelink = 'B' + tag
-                            link1 = sporktools.Links.ExecCodeLink(None, "%s" % word,
+                            link1 = Links.ExecCodeLink(None, "%s" % word,
                                                                   "from %s import %s" % (modulepath, word)).create()
                             suggestions.append(("(%s) from %s import %s" % (filelink, modulepath, link1),
                                                 "(%s) from %s import %s" % (tag, modulepath, word)))

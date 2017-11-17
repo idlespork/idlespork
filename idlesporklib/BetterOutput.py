@@ -28,6 +28,11 @@ def _combine_strings(strings):
 real_original_display_hook = None
 
 
+def pprint_no_none(val):
+    if val is not None:
+        pprint.pprint(val)
+
+
 class BetterOutput:
     _USE_PPRINT = idleConf.GetOption("extensions", "BetterOutput", "use-pprint", type="bool", default=False)
     
@@ -83,7 +88,7 @@ class BetterOutput:
         except AttributeError:
             pass
         if value:
-            run.original_displayhook = pprint.pprint
+            run.original_displayhook = pprint_no_none  # pprint.pprint
         else:
             run.original_displayhook = real_original_display_hook
         return True

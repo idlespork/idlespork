@@ -4,6 +4,7 @@ See
     https://github.com/anntzer/ipython-autoimport
 and included AutoImport_LICENSE.txt in licenses folder.
 """
+import __builtin__
 import sys
 import ast
 import importlib
@@ -109,6 +110,10 @@ class AutoImporterMap(dict):
         try:
             value = super(AutoImporterMap, self).__getitem__(name)
         except KeyError as key_error:
+            try:
+                return getattr(__builtin__, name)
+            except AttributeError:
+                pass
             # Find single matching import, if any.
             imports = self._import_cache.get(name, {"import {}".format(name)})
             if len(imports) != 1:

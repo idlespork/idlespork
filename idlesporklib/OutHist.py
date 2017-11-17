@@ -13,6 +13,7 @@ class OutHist(EnablableExtension):
     """
     class __metaclass__(EnablableExtension.__metaclass__):
         _index_by_previous_line = idleConf.GetOption("extensions", "OutHist",
+
                                                      "index_by_previous_line", type="bool", default=False,
                                                      member_name='index_by_previous_line')
         just_changed = False
