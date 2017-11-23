@@ -186,18 +186,21 @@ class SmartSuggest(EnablableExtension):
                             if ('module', modulepath) not in objs[name]:
                                 objs[name][('module', modulepath)] = (filepath, 0)
 
-                                with open(filepath, 'r') as f:
-                                    for i, line in enumerate(f):
-                                        fullmodpath = '%s.%s' % (modulepath, name) if modulepath else name
-
-                                        m = defclass.match(line)
-                                        if m:
-                                            t, sym = m.groups()
-                                            objs[sym][(t, fullmodpath)] = (filepath, i)
-                                        else:
-                                            m = variable.match(line)
+                                try:
+                                    with open(filepath, 'r') as f:
+                                        for i, line in enumerate(f):
+                                            fullmodpath = '%s.%s' % (modulepath, name) if modulepath else name
+    
+                                            m = defclass.match(line)
                                             if m:
-                                                objs[m.group(1)][('var', fullmodpath)] = (
-                                                    filepath, i)
+                                                t, sym = m.groups()
+                                                objs[sym][(t, fullmodpath)] = (filepath, i)
+                                            else:
+                                                m = variable.match(line)
+                                                if m:
+                                                    objs[m.group(1)][('var', fullmodpath)] = (
+                                                        filepath, i)
+                                except IOError:
+                                    pass
 
         SmartSuggest.allobjs = objs
