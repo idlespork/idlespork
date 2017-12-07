@@ -373,6 +373,7 @@ class RunThread(threading.Thread):
     def displayhook(self, val):
         if self == World.current_thread:
             original_displayhook(val)
+            World.executive.locals['_'] = val
         else:
             self.ret = val
             if val is not None:
