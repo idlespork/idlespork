@@ -90,7 +90,7 @@ class CallTips:
             return
 
         self.calltip = self._make_calltip_window()
-        self.calltip.showtip(arg_text, sur_paren[0], sur_paren[1])
+        self.calltip.showtip(arg_text, self.text.index('insert'), sur_paren[1])
 
     def arg_names(self, evalfuncs):
         hp = HyperParser(self.editwin, "insert")
