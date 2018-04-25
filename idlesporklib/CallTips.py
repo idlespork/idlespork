@@ -5,7 +5,7 @@ parameter and docstring information when you type an opening parenthesis, and
 which disappear when you type a closing parenthesis.
 
 """
-import __main__
+# import __main__
 import re
 import sys
 import textwrap
@@ -71,12 +71,18 @@ class CallTips:
         hp = HyperParser(self.editwin, "insert")
         sur_paren = hp.get_surrounding_brackets('(')
         if not sur_paren:
-            self.calltip.hidetip()
+            try:
+                self.calltip.hidetip()
+            except AttributeError:
+                pass
             return
         hp.set_index(sur_paren[0])
         expression = hp.get_expression()
         if self.calltip and not expression or (not evalfuncs and expression.find('(') != -1):
-            self.calltip.hidetip()
+            try:
+                self.calltip.hidetip()
+            except AttributeError:
+                pass
             return
         arg_text = self.fetch_tip(expression)
         if self.calltip and not arg_text:
@@ -84,7 +90,7 @@ class CallTips:
             return
 
         self.calltip = self._make_calltip_window()
-        self.calltip.showtip(arg_text, sur_paren[0], sur_paren[1])
+        self.calltip.showtip(arg_text, self.text.index('insert'), sur_paren[1])
 
     def arg_names(self, evalfuncs):
         hp = HyperParser(self.editwin, "insert")
@@ -132,8 +138,10 @@ class CallTips:
         in a namespace spanning sys.modules and __main.dict__.
         """
         if expression:
+            import run
             namespace = sys.modules.copy()
-            namespace.update(__main__.__dict__)
+            # namespace.update(__main__.__dict__)
+            namespace.update(run.World.executive.locals)
             try:
                 return eval(expression, namespace)
             except BaseException:
@@ -284,7 +292,7 @@ def get_arg_text(ob):
     else:
         doc = getattr(ob, "__doc__", "")
     if doc:
-        for line in doc.split('\n', _MAX_LINES)[:_MAX_LINES]:
+        for line in doc.strip().split('\n', _MAX_LINES)[:_MAX_LINES]:
             line = line.strip()
             if not line:
                 break

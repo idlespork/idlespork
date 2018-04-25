@@ -373,6 +373,8 @@ class RunThread(threading.Thread):
     def displayhook(self, val):
         if self == World.current_thread:
             original_displayhook(val)
+            if val is not None:
+                World.executive.locals['_'] = val
         else:
             self.ret = val
             if val is not None:
@@ -436,7 +438,7 @@ class RunThread(threading.Thread):
         if (self != World.current_thread) and not self.trueoutput:
             self.output.write(output)
         else:
-            sys.stdout.real_stdout.write(output)
+            remote_stdout.write(output)
 
     def flush(self):
         sys.stdout.real_stdout.flush()

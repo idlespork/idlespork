@@ -1,29 +1,37 @@
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #  Copyright (c) IPython Development Team.
 #  Distributed under the terms of the Modified BSD License.
 #
 #  The full license is in the file IPython_COPYING.txt, distributed with this software.
-#-----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 #
 # The class below was constructed from code copied from the file `completerlib.py` in the IPython project.
 
-
+from __future__ import print_function
 import inspect
 import os
 import re
 import sys
+import imp
+from collections import defaultdict
+from inspect import isclass
 from time import time
 from zipimport import zipimporter
 
-from configHandler import idleConf
+from idlesporklib.configHandler import idleConf
+from idlesporklib import sporktools
+from idlesporklib import Suggest
+from idlesporklib.spell import candidates
+from idlesporklib import Links
 
 try:
     # Python >= 3.3
+    # noinspection PyCompatibility
     from importlib.machinery import all_suffixes
     _suffixes = all_suffixes()
 except ImportError:
     from imp import get_suffixes
-    _suffixes = [ s[0] for s in get_suffixes() ]
+    _suffixes = [s[0] for s in get_suffixes()]
 
 
 class ModuleCompletion(object):
@@ -41,6 +49,10 @@ class ModuleCompletion(object):
                            r'|'.join(re.escape(s) for s in _suffixes))
 
     rootmodules_cache = {}
+
+    allobjs = None
+    executing_patch = False
+    patched = False
 
     @staticmethod
     def module_list(path):
@@ -183,7 +195,7 @@ class ModuleCompletion(object):
             if lastword:
                 withcase = [mod for mod in mods if mod.startswith(lastword)]
                 if withcase:
-                    mods =  withcase
+                    mods = withcase
                 # if none, then case insensitive ones are ok too
                 else:
                     text_low = lastword.lower()

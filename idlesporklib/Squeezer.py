@@ -8,8 +8,13 @@ Squeezer - using this extension will make long texts become a small button.
 import re
 from PyShell import PyShell
 from configHandler import idleConf
-import Tkinter
-import tkFont
+import Links
+try:
+    import Tkinter
+    import tkFont
+except ImportError:
+    import tkinter as Tkinter
+    from tkinter import font as tkFont
 import os
 
 
@@ -99,13 +104,14 @@ def tags_in_range(text, start, end):
 # define the extension's classes
 
 class ExpandingButton(Tkinter.Button):
-    def __init__(self, s, tags, numoflines, squeezer, def_line=None, rangetags=()):
+    def __init__(self, s, tags, numoflines, squeezer, def_line=None, rangetags=(), check_links=False):
         self.s = s
         self.tags = tags
         self.squeezer = squeezer
         self.editwin = editwin = squeezer.editwin
         self.text = text = editwin.text
         self.rangetags = rangetags
+        self.check_links = check_links
 
         # If this is for a stdin area, we should remember the line just before so it will appear in preview and copy.
         self.def_line = def_line
@@ -148,6 +154,11 @@ class ExpandingButton(Tkinter.Button):
         start = self.text.index(self)
         basetext.insert(start, expanded_txt, self.tags)
 
+        if self.check_links:
+            Links.parse(basetext, "%d.0" % (int(self.text.index(self).split('.')[0]) - len(expanded_txt.split('\n'))),
+                        self.text.index(self))
+            self.check_links = False
+
         if self.rangetags:
             for name, i0, i1, in self.rangetags:
                 basetext.tag_add(name, start + '+%dc' % i0, start + '+%dc+%dc' % (i0, i1))
@@ -168,14 +179,14 @@ class ExpandingButton(Tkinter.Button):
         
     def copy(self, event):
         self.clipboard_clear()
-        self.clipboard_append(self.copypreview_txt(), type='STRING')
+        self.clipboard_append(Links.replace_links(self.copypreview_txt()), type='STRING')
         self.selection_own()
 
     def preview(self, event):
         from tempfile import mktemp
         fn = mktemp("longidletext")
         f = open(fn, "w")
-        f.write(self.copypreview_txt())
+        f.write(Links.replace_links(self.copypreview_txt()))
         f.close()
         os.system(self.squeezer._PREVIEW_COMMAND % {"fn":fn})
             
@@ -191,6 +202,8 @@ class Squeezer:
 
     Options:
         max-num-of-lines - output bigger than this will be squeezed.
+
+        min-num-of-lines - output smaller than this will *not* be squeezed.
 
         max-expand - output will never be more than this amount of characters.
 
@@ -216,6 +229,9 @@ class Squeezer:
     _SQUEEZE_CODE = idleConf.GetOption("extensions", "Squeezer", "squeeze-code", type="bool", default=False,
                                        member_name='_SQUEEZE_CODE')
 
+    _MIN_NUM_OF_LINES = idleConf.GetOption("extensions", "Squeezer", "min-num-of-lines", type="int", default=1,
+                                           member_name="_MIN_NUM_OF_LINES")
+
     menudefs = [
         ('edit', [
             None,   # Separator
@@ -228,6 +244,10 @@ class Squeezer:
 
         
     def __init__(self, editwin):
+        """
+        Args:
+            editwin (PyShell): pyshell window.
+        """
         self.editwin = editwin
         self.text = text = editwin.text
         self.expandingbuttons = []
@@ -242,8 +262,7 @@ class Squeezer:
                     if numoflines < self._MAX_NUM_OF_LINES:
                         return write(s, tags)
                     else:
-                        expandingbutton = ExpandingButton(s, tags, numoflines,
-                                                          self)
+                        expandingbutton = ExpandingButton(s, tags, numoflines, self, check_links=True)
                         text.mark_gravity("iomark", Tkinter.RIGHT)
                         text.window_create("iomark",window=expandingbutton,
                                            padx=3, pady=5)
@@ -260,9 +279,12 @@ class Squeezer:
                                      "<<squeeze-current-text>>")])
 
     def count_lines(self, s):
-        "Calculate number of lines in given text.\n\n" \
-        "Before calculation, the tab width and line length of the text are" \
-        "fetched, so that up-to-date values are used."
+        """
+        Calculate number of lines in given text.
+
+        Before calculation, the tab width and line length of the text are
+        fetched, so that up-to-date values are used.
+        """
         # Tab width is configurable
         tabwidth = self.editwin.get_tabwidth()
 
@@ -307,13 +329,21 @@ class Squeezer:
             return "break"
 
         prev_ranges = []
-        for tag_name in ("stdout","stderr"):
+
+        if self._SQUEEZE_CODE:
+            valid_tags = ("stdout", "stderr", "stdin")
+        else:
+            valid_tags = ("stdout", "stderr")
+
+        for tag_name in valid_tags:
             rng = last_console
             while rng:
                 rng = self.text.tag_prevrange(tag_name, rng[0])
-                if rng and self.text.get(*rng).strip():
-                    prev_ranges.append((rng, tag_name))
-                    break
+                if rng:
+                    txt = self.text.get(*rng).strip()
+                    if txt and (tag_name != 'stdin' or '\n' in txt) and self.count_lines(txt) > self._MIN_NUM_OF_LINES:
+                        prev_ranges.append((rng, tag_name))
+                        break
         if not prev_ranges:
             return "break"
 
@@ -389,14 +419,16 @@ class Squeezer:
                                 padx=3, pady=5)
         # insert the ExpandingButton to the list of ExpandingButtons
         i = len(self.expandingbuttons)
-        while i > 0 and self.text.compare(self.expandingbuttons[i-1],
-                                          ">", expandingbutton):
+        while i > 0 and self.text.compare(self.expandingbuttons[i-1], ">", expandingbutton):
             i -= 1
         self.expandingbuttons.insert(i, expandingbutton)
         return True
 
     def find_button(self, pos):
         for btn in self.expandingbuttons:
-            if self.text.compare(pos, "==", btn):
-                return btn
+            try:
+                if self.text.compare(pos, "==", btn):
+                    return btn
+            except Tkinter.TclError:
+                pass
         return None

@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 from __future__ import print_function
 
+import inspect
 import os
 import os.path
 import sys
@@ -389,6 +390,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.port = PORT
         self.original_compiler_flags = self.compile.compiler.flags
         self.subprocess_cwd = None
+        self.onrestart_funcs = set()
 
     _afterid = None
     rpcclt = None
@@ -448,7 +450,7 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.spawn_subprocess()
         #time.sleep(20) # test to simulate GUI not accepting connection
         # Accept the connection from the Python execution server
-        self.rpcclt.listening_sock.settimeout(10)
+        self.rpcclt.listening_sock.settimeout(100)
         try:
             self.rpcclt.accept()
         except socket.timeout:
@@ -464,6 +466,14 @@ class ModifiedInterpreter(InteractiveInterpreter):
         self.transfer_path(with_cwd=True)
         self.poll_subprocess()
         return self.rpcclt
+
+    def register_onrestart(self, func):
+        """Register a function to be called on shell restart"""
+        self.onrestart_funcs.add(func)
+
+    def unregister_onrestart(self, func):
+        """Unegister a function from being called on shell restart"""
+        self.onrestart_funcs.remove(func)
 
     def restart_subprocess(self, with_cwd=False, filename=''):
         if self.restarting:
@@ -507,6 +517,11 @@ class ModifiedInterpreter(InteractiveInterpreter):
             debug.load_breakpoints()
         self.compile.compiler.flags = self.original_compiler_flags
         self.restarting = False
+
+        # call all registered functions
+        for func in self.onrestart_funcs:
+            func()
+
         return self.rpcclt
 
     def __request_interrupt(self):
@@ -898,8 +913,24 @@ Returns True if the caller should run endexecuting, and False otherwise"""
         link.gui = self.tkconsole
         return Links.create_link_local(link)
 
-class PyShell(OutputWindow):
+    def run_extension_function(self, __run_extension_function__ext_name, __run_extension_function__func_name,
+                               args, kwargs):
+        """Helper function for remote calls from extensions"""
+        ext_name, func_name = __run_extension_function__ext_name, __run_extension_function__func_name
+        try:
+            global flist
+            inst = flist.pyshell.extensions.get(ext_name)
+            if inst is None:
+                from configHandler import IdleConf
+                # Get extension class, instantiate, and call function.
+                cls = getattr(__import__(ext_name, globals(), locals(), []), ext_name, None)
+                self.extensions[ext_name] = inst = cls()
+            return getattr(inst, func_name)(*args, **kwargs)
+        except Exception as e:
+            return e
 
+
+class PyShell(OutputWindow):
     shell_title = "Idlespork"
 
     # Override classes
@@ -969,7 +1000,7 @@ class PyShell(OutputWindow):
             sys.stderr = self.stderr
             sys.stdin = self.stdin
         #
-        self.history = History(self.text)
+        self.history = History(self)
         self.histwin.attach_history(self.text, self.history)
         #
         self.pollinterval = 50  # millisec
@@ -1112,9 +1143,13 @@ class PyShell(OutputWindow):
                 self.close()
                 return False
         else:
-            nosub = "==== No Subprocess ===="
-        self.write("Python %s on %s\n%s\n%s" %
-                   (sys.version, sys.platform, self.COPYRIGHT, nosub))
+            nosub = "==== No Subprocess ====\n"
+
+        whatsnew_path = os.path.join(os.path.dirname(inspect.getfile(PyShell)), 'WhatsNew.txt')
+        link = Links.create_link_local(Links.FileLink(self, 'WhatsNew.txt', whatsnew_path, 0))
+
+        self.write("Python %s on %s\n%s\n%sTo see what's new in Idlespork open %s\n" %
+                   (sys.version, sys.platform, self.COPYRIGHT, nosub, link))
         self.text.focus_force()
         self.showprompt()
         import Tkinter

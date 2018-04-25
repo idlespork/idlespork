@@ -64,6 +64,9 @@ refresh-calltip=<KeyRelease-parenright> <KeyRelease-0>
 [ResourcesStatus]
 enable=False
 
+[SmartSuggest]
+enable=False
+
 [CodeContext]
 enable=True
 enable_shell=False
@@ -95,6 +98,13 @@ enable=True
 enable_shell=False
 enable_editor=True
 
+[CustomizePrompt]
+enable=True
+prompt-format=>>>
+
+[PatchTkinter]
+enable=False
+
 [ScriptBinding]
 enable=True
 enable_shell=False
@@ -111,6 +121,10 @@ zoom-height=<Alt-Key-2>
 
 [BetterOutput]
 enable=True
+use-pprint=False
+
+[AutoImport]
+enable=False
 
 [MultiLineRun]
 enable=1
@@ -124,11 +138,12 @@ updatedelay=1000
 
 [OutHist]
 enable=False
-histsize=10
+index_by_previous_line=False
 
 [Squeezer]
 enable=True
 max-num-of-lines=30
+min-num-of-lines=3
 preview-command-posix=(xterm -e less %(fn)s; rm -f %(fn)s) &
 preview-command-win=notepad %(fn)s
 preview-command-mac=
@@ -157,6 +172,10 @@ move-word-left=<Control-Key-Left>
 sel-word-left=<Shift-Control-Key-Left>
 move-word-right=<Control-Key-Right>
 sel-word-right=<Shift-Control-Key-Right>
+move-subword-left=<Alt-Key-Left>
+sel-subword-left=<Shift-Alt-Key-Left>
+move-subword-right=<Alt-Key-Right>
+sel-subword-right=<Shift-Alt-Key-Right>
 move-linestart=<Key-Home>
 sel-linestart=<Shift-Key-Home>
 del-to-linestart=<Control-Key-u>

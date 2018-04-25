@@ -626,6 +626,7 @@ class IdleConf:
             '<<python-context-help>>': ['<Shift-F1>'],
             '<<history-window-toggle>>' : ['<Control-h><Control-t>'],
             '<<history-next>>': ['<Alt-n>'],
+            '<<history-guess>>': ['<Control-p>'],
             '<<history-previous>>': ['<Alt-p>'],
             '<<interrupt-execution>>': ['<Control-c>'],
             '<<view-restart>>': ['<F6>'],

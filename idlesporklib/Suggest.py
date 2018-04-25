@@ -9,7 +9,7 @@ import traceback
 import PyParse
 from HyperParser import HyperParser
 
-__main__ = sys.modules['__main__']
+# __main__ = sys.modules['__main__']
 __builtin__ = sys.modules['__builtin__']
 softnewline = False
 
@@ -21,7 +21,7 @@ def exception_suggest(typ, val, tb, source, filename):
         m = re.match("^(?:global )?name '(.*)' is not defined$", str(val))
         if m:
             undefname = m.group(1)
-            _import_suggest(undefname, source)
+            import_suggest(undefname, source)
             _spelling_suggest(undefname, source, last_trace, filename)
     if typ == exceptions.AttributeError:
         m = re.search("object has no attribute '(.*)'$", str(val))
@@ -30,7 +30,8 @@ def exception_suggest(typ, val, tb, source, filename):
             _spelling_suggest_attr_error(undefname, source, \
                 last_trace, filename)
             
-def _import_suggest(name, source):
+
+def import_suggest(name, source):
     try:
         fl, path, desc = imp.find_module(name)
         if fl is not None: fl.close()
@@ -39,7 +40,7 @@ def _import_suggest(name, source):
     link1 = sporktools.Links.ExecCodeLink(None, "import %s" % name, \
         "import %s" % name).create()
     #link2 = sporktools.Links.ExecCodeLink(None, "import and rerun", ["import %s" % name, source]).create()
-    _newline()
+    newline()
     print("Do you want to %s?" % (link1), file=sys.stderr)
     #print("Do you want to %s? %s?" % (link1, link2), file=sys.stderr)
 
@@ -61,11 +62,12 @@ def _spelling_suggest_attr_error(name, source, last_trace, filename):
         return
 
 def _spelling_suggest(name, source, last_trace, filename, lst = None):
+    import run
     if last_trace[0] != filename:
         return
 
     if lst is None:
-        lst = dir(__main__) + dir(__builtin__)
+        lst = run.World.executive.locals.keys() + dir(__builtin__)
 
     cl = close_words(name, lst, 3)
     if len(cl) > 0:
@@ -73,10 +75,10 @@ def _spelling_suggest(name, source, last_trace, filename, lst = None):
         for word in cl:
             links.append(sporktools.Links.ExecCodeLink(None, \
                 word, source.replace(name, word)).create())
-        _newline()
+        newline()
         print("Did you mean %s?" % " / ".join(links), file=sys.stderr)
 
-def _newline():
+def newline():
     global softnewline
     if softnewline:
         print(file=sys.stderr)
@@ -141,5 +143,5 @@ class MiniHyperParser(HyperParser):
 def get_entity(name):
     "Lookup name in a namespace spanning sys.modules and __main.dict__"
     namespace = sys.modules.copy()
-    namespace.update(__main__.__dict__)
+    namespace.update(run.World.executive.locals)
     return eval(name, namespace)

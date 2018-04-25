@@ -3,8 +3,11 @@ BetterOutput - an extension which replaces the write method of the PyShell,
 so that \r will return to the beginning of line, and xterm escape sequences
 won't be printed.
 """
-
+import pprint
 import re
+
+from EnablableExtension import remoteboundmethod
+from configHandler import idleConf
 
 from OutputWindow import OutputWindow
 import Links
@@ -20,13 +23,22 @@ def _combine_strings(strings):
     for s in strings:
         lasts = s + lasts[len(s):]
     return lasts
-    
+
+
+real_original_display_hook = None
+
+
+def pprint_no_none(val):
+    if val is not None:
+        pprint.pprint(val)
+
 
 class BetterOutput:
+    _USE_PPRINT = idleConf.GetOption("extensions", "BetterOutput", "use-pprint", type="bool", default=False)
     
     escapeCodes = re.compile(r"\x1b\[[\d;]*m")
 
-    def __init__(self, editwin):
+    def __init__(self, editwin=None):
         import PyShell
         if not isinstance(editwin, PyShell.PyShell):
             return
@@ -53,6 +65,33 @@ class BetterOutput:
             editwin.extensions["Squeezer"].origwrite = self.mywrite
         else:
             editwin.write = self.mywrite
+
+        editwin.interp.register_onrestart(self._loop_init)
+        self._loop_init()
+
+    def _loop_init(self):
+        try:
+            rpc = self.editwin.flist.pyshell.interp.rpcclt
+            notyet = False
+        except AttributeError:
+            notyet = True
+
+        if notyet or not self.set_use_pprint(self._USE_PPRINT):
+            self.editwin.text.after_idle(self._loop_init)
+
+    @remoteboundmethod
+    def set_use_pprint(self, value):
+        global real_original_display_hook
+        import run
+        try:
+            real_original_display_hook = run.original_displayhook
+        except AttributeError:
+            pass
+        if value:
+            run.original_displayhook = pprint_no_none  # pprint.pprint
+        else:
+            run.original_displayhook = real_original_display_hook
+        return True
 
     def mywrite(self, s, tags=()):
         """

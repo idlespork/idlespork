@@ -1,0 +1,122 @@
+What's New
+--------------------------------------
+
+(16th November 2017)
+
+AutoImport -
+    Adapted Antony Lee's excellent IPython AutoImport extension to idlespork.
+    It automatically imports missing names that you've imported in previous sessions -
+    without breaking running code! It's very slick. It's not that the code is run again,
+    rather the name is imported just in time to keep running correctly.
+    For example, if in some session you wrote:
+        >>> import numpy as np
+    And then in a later session, without importing numpy, you wrote:
+        >>> 1 + np.zeros(3)
+    Then this happens:
+        AutoImport: import numpy as np
+        array([ 1.,  1.,  1.])
+
+    Amazing!
+
+
+Display with pprint -
+    You can now set "use-pprint" option in the BetterOutput extension, and displayed objects will
+    be automatically displayed with pprint.
+
+
+OutHist -
+    Modified extension to act like ipython's Out variable. So there's now simply an Out variable, which is a dict,
+    that has output history in it. You can write the line number in the prompt by changing options in
+    the CustomizePrompt extension.
+
+
+Bug fixes:
+    SmartSuggestions doesn't recurse into links when scanning for symbols. This was causing Dror trouble.
+
+(4th October 2017)
+
+History Guess -
+    There's a new configurable key called "history-guess". When pressed, it tries to complete current line
+    based on the previous line. Dror hopes to work on this feature more and significantly reduce the amount of
+    typing we all do while working. Defaults to Control-P on Linux.
+
+    Example:
+        >>> x = 1
+        >>> y = 2
+        >>> z = 3
+        [... more code ...]
+        >>> x = 1
+        [press history-guess, and the following is automatically completed]
+        >>> y = 2
+        [press history-guess again, and the following is automatically completed]
+        >>> z = 3
+
+    Amazing.
+
+
+SmartSuggest -
+    A new extension that chaches all symbols in all modules from all pythons path directories. Once initialized,
+    module/class/function suggestions include symbols that aren't imported. Simply enable from config dialog.
+
+    Example:
+        >>> walk('my_dir')
+        Traceback (most recent call last):
+          File "<pyshell#0>", line 1, in <interactive>
+            walk
+        NameError: name 'walk' is not defined
+
+        Here are some import suggestions:
+        (F) from ast import walk
+        (F) from os import walk
+
+    The words are links, so you can just move cursor to the right symbol with keystrokes and press enter to import.
+
+
+PatchTkinter -
+    New extension to safeguard from Tkinter crashes. It turns out that Tkinter and threads and stuff don't work
+    so well. This extension replaces some delete function in Tkinter classes, hoping to prevent them from being
+    called from the wrong thread. This has been working on Dror's computer for much success for about a month.
+    Simply enable from config dialog.
+
+
+SublimeText Word Jumping -
+    Moving (sub)words to the left/right using Control/Alt keys is now similar to the use case in the SublimeText
+    editor. Ofir asked for this, and it really makes more sense. The keys are configurable in the config dialog.
+
+
+CustomizePrompt -
+    An extension that allows the prompt, i.e. ">>>", to be changed. The format is configurable from the config dialog,
+    with more information there.
+
+    Examples:
+        Setting `prompt-format` to "[%H:%M:%S]" shows the time when the prompt was printed:
+        [19:53:05] sum(i for i in range(100000000))
+        4999999950000000
+        [19:53:39]
+
+        Setting `prompt-format` to "[%dM:%dS.%df]" shows how much time the last statement took:
+        [00:00.00] sum(i for i in range(100000000))
+        ... 4999999950000000
+        [00:04.75]
+
+        It took 5.75 seconds to compute! Gauss would be faster.
+
+
+ResourceStatus -
+    When enabled, a new timer now shows in the status bar for every run statement. It's just a nice small addition.
+
+
+AutoComplete -
+    Added option to show lengths of tuples/lists/numpy.ndarrays.
+
+    Example:
+        >>> [1, 2, 3][
+        [hit autocomplete key, and see tooltip `list[0:3]`]
+        >>> import numpy as np
+        >>> np.random.randn(10, 4, 7)[
+        [hit autocomplete key, and see tooltip `ndarray((10, 4, 7), dtype=float64)`]
+
+    Note that pressing the `force-open-completions` always runs some code, so be careful not to run something heavy.
+
+
+Bug Fixes - some bug fixes.

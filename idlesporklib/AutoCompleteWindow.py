@@ -424,6 +424,8 @@ class AutoCompleteWindow:
         # The selection doesn't change.
 
     def hide_window(self):
+        import sys
+        import threading
         if not self.is_active():
             return
 

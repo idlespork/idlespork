@@ -40,6 +40,8 @@ import traceback
 import copy_reg
 import types
 import marshal
+from collections import defaultdict
+import time
 
 
 def unpickle_code(ms):
@@ -119,6 +121,7 @@ class RPCServer(SocketServer.TCPServer):
 objecttable = {}
 request_queue = Queue.Queue(0)
 response_queue = Queue.Queue(0)
+messages_queue = defaultdict(Queue.Queue)
 
 
 class SocketIO(object):
@@ -149,7 +152,7 @@ class SocketIO(object):
     def debug(self, *args):
         if not self.debugging:
             return
-        s = self.location + " " + str(threading.currentThread().getName())
+        s = str(time.time()).ljust(15) + self.location + " " + str(threading.currentThread().getName())
         for a in args:
             s = s + " " + str(a)
         print>>sys.__stderr__, s
@@ -225,6 +228,11 @@ class SocketIO(object):
             cvar = threading.Condition()
             self.cvars[seq] = cvar
         self.debug(("asynccall:%d:" % seq), oid, methodname, args, kwargs)
+        # if args == ('Exception ', 'stderr') or 'Tk' in globals():
+        #     import traceback
+        #     self.debug('\n'.join(map(str, traceback.extract_stack())))
+        #     import pdb
+        #     pdb.set_trace()
         self.putmessage((seq, request))
         return seq
 
@@ -419,25 +427,32 @@ class SocketIO(object):
                 seq, response = qmsg
                 message = (seq, ('OK', response))
                 self.putmessage(message)
+
             # poll for message on link
+            # first check if another pollmessage call saved a message for us
             try:
-                message = self.pollmessage(wait)
-                if message is None:  # socket not ready
+                message = messages_queue[myseq].get(False)
+                self.debug("pollresponse found message myseq:%s:message:%s" % (myseq, message))
+            except Queue.Empty:
+                try:
+                    message = self.pollmessage(wait)
+                    if message is None:  # socket not ready
+                        return None
+                except EOFError:
+                    self.handle_EOF()
                     return None
-            except EOFError:
-                self.handle_EOF()
-                return None
-            except AttributeError:
-                return None
+                except AttributeError:
+                    self.debug("pollresponse:%s:except Attribute Error" % myseq)
+                    return None
+
             seq, resq = message
             how = resq[0]
-            self.debug("pollresponse:%d:myseq:%s" % (seq, myseq))
             # process or queue a request
             if how in ("CALL", "QUEUE"):
-                self.debug("pollresponse:%d:localcall:call:" % seq)
+                self.debug("pollresponse:%d:myseq:%s:localcall:call" % (seq, myseq))
                 response = self.localcall(seq, resq)
-                self.debug("pollresponse:%d:localcall:response:%s"
-                           % (seq, response))
+                self.debug("pollresponse:%d:myseq:%s:localcall:response:%s"
+                           % (seq, myseq, response))
                 if how == "CALL":
                     self.putmessage((seq, response))
                 elif how == "QUEUE":
@@ -446,25 +461,31 @@ class SocketIO(object):
                 continue
             # return if completed message transaction
             elif seq == myseq:
+                self.debug("pollresponse:%d:completed" % seq)
                 return resq
             # must be a response for a different thread:
             else:
                 cv = self.cvars.get(seq, None)
-                # response involving unknown sequence number is discarded,
-                # probably intended for prior incarnation of server
+                # Old comment:
+                #   "response involving unknown sequence number is discarded,
+                #   probably intended for prior incarnation of server"
+                # Dror: That's not right. There has always been a race condition on messages coming back from
+                # #S. If a socket thread and some other thread put a message at the same time to go back to #C,
+                # when is processes one the other can be polled - and then discarded. We don't want that.
                 if cv is not None:
                     cv.acquire()
                     self.responses[seq] = resq
                     cv.notify()
                     cv.release()
+                else:
+                    messages_queue[seq].put(message)
                 continue
 
     def handle_EOF(self):
         "action taken upon link being closed by peer"
         self.EOFhook()
         self.debug("handle_EOF")
-        for key in self.cvars:
-            cv = self.cvars[key]
+        for key, cv in list(self.cvars.items()):
             cv.acquire()
             self.responses[key] = ('EOF', None)
             cv.notify()

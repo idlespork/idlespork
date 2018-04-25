@@ -124,7 +124,7 @@ class CallTip(object):
             return
         curline, curcol = map(int, self.widget.index("insert").split('.'))
         if (curline != self.parenline or
-                (self.hideOnCursorBack and ((curline == self.parenline and curcol <= self.parencol) or
+                (self.hideOnCursorBack and ((curline == self.parenline and curcol < self.parencol) or
                                                 self.safecompare()))):
             self.hidetip()
 
